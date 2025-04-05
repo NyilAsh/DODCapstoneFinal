@@ -70,7 +70,7 @@ const actionLogBtn = document.getElementById("actionLogBtn");
 const togglePathsBtn = document.getElementById("togglePathsBtn");
 const statusMessage = document.getElementById("statusMessage");
 const actionLog = document.getElementById("actionLog");
-const autoSelectBtn = document.getElementById("autoSelectBtn");
+// Removed autoSelectBtn variable
 const autoPlayBtn = document.getElementById("autoPlayBtn");
 const generatePredictionsBtn = document.getElementById("generatePredictionsBtn");
 
@@ -118,7 +118,7 @@ function startAutoPlay() {
   
   newGameBtn.disabled = true;
   nextTurnBtn.disabled = true;
-  autoSelectBtn.disabled = true;
+  // Removed autoSelectBtn disabling
   
   autoPlayInterval = setInterval(() => {
     if (gameOver) {
@@ -136,7 +136,7 @@ function stopAutoPlay() {
   
   newGameBtn.disabled = false;
   nextTurnBtn.disabled = false;
-  autoSelectBtn.disabled = false;
+  // Removed autoSelectBtn enabling
   
   if (autoPlayInterval) {
     clearInterval(autoPlayInterval);
@@ -227,7 +227,7 @@ function generateSmoothManhattanCurvePath(r0, c0, r1, c1) {
 
 function nearestDefender(spawn) {
   let def1 = [8, 2, "A"],
-    def2 = [7, 7, "B"];
+      def2 = [7, 7, "B"];
   let dist1 = Math.abs(def1[0] - spawn[0]) + Math.abs(def1[1] - spawn[1]);
   let dist2 = Math.abs(def2[0] - spawn[0]) + Math.abs(def2[1] - spawn[1]);
   return dist1 <= dist2 ? def1 : def2;
@@ -519,7 +519,7 @@ function newGame() {
   statusMessage.textContent = "";
   nextTurnBtn.disabled = false;
   newGameBtn.disabled = false;
-  autoSelectBtn.disabled = false;
+  // Removed autoSelectBtn enabling
   showPaths = false;
   shotToggle = 0;
   board = createEmptyBoard();
@@ -544,7 +544,7 @@ function newGame() {
     ];
   }
   
-  updateDefenderShotHistory(); // Removed autoSelectShots() call here
+  updateDefenderShotHistory();
   
   trainingData.push(JSON.parse(JSON.stringify(board)));
   drawBoardAndPaths();
@@ -628,7 +628,7 @@ function redirectAttackers(destroyedDefender) {
 
 function isValidShotPosition(row, col) {
   return (
-    row>=0&&col>=0&&
+    row >= 0 && col >= 0 &&
     board[row][col] === 0 &&
     !attackers.some((a) => {
       let pos = a.steppedPath[a.currentIndex];
@@ -640,132 +640,7 @@ function isValidShotPosition(row, col) {
   );
 }
 
-function autoSelectShots() {
-  defenderShots = { A: [], B: [] };
-
-  let livingDefenders = [];
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-      if (typeof board[r][c] === "string") {
-        livingDefenders.push(board[r][c]);
-      }
-    }
-  }
-
-  for (let defender of livingDefenders) {
-    let closestAttacker = null;
-    let minDistance = Infinity;
-
-    for (let atk of attackers) {
-      if (atk.baseTarget[2] !== defender) continue;
-
-      let currentPos = atk.steppedPath[atk.currentIndex];
-      let distance =
-        Math.abs(currentPos[0] - atk.baseTarget[0]) +
-        Math.abs(currentPos[1] - atk.baseTarget[1]);
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestAttacker = atk;
-      }
-    }
-
-    if (!closestAttacker) {
-      for (let atk of attackers) {
-        let currentPos = atk.steppedPath[atk.currentIndex];
-        let distance =
-          Math.abs(currentPos[0] - atk.baseTarget[0]) +
-          Math.abs(currentPos[1] - atk.baseTarget[1]);
-
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestAttacker = atk;
-        }
-      }
-    }
-
-    if (!closestAttacker) continue;
-
-    let positions = attackerHistory[closestAttacker.id] || [];
-
-    let predictedPos;
-    if (positions.length >= 2 && positions[0][0] !== -1 && positions[1][0] !== -1) {
-      // Calculate movement vector from last 2 positions
-        let dr = positions[0][0] - positions[1][0];
-        let dc = positions[0][1] - positions[1][1];
-        
-      // Predict next position by continuing the movement
-        predictedPos = [
-          positions[0][0] + dr,
-          positions[0][1] + dc
-        ];
-        
-      // 50% chance to offset the prediction by 1 in a random direction
-      if (Math.random() < 0.5) {
-        const directions = [
-          [0, 1], [1, 0], [0, -1], [-1, 0] 
-        ];
-        const randomDir =
-          directions[Math.floor(Math.random() * directions.length)];
-        predictedPos[0] += randomDir[0];
-        predictedPos[1] += randomDir[1];
-      }
-
-      predictedPos[0] = Math.max(0, Math.min(GRID_SIZE - 1, predictedPos[0]));
-      predictedPos[1] = Math.max(0, Math.min(GRID_SIZE - 1, predictedPos[1]));
-      
-      if (isValidShotPosition(predictedPos[0], predictedPos[1])) {
-        defenderShots[defender].push([predictedPos[0], predictedPos[1]]);
-        actions.push(
-          `Defender ${defender} predicted shot at (${predictedPos[1]},${predictedPos[0]})`
-        );
-        continue;
-      }
-    }
-
-    let currentPos = closestAttacker.steppedPath[closestAttacker.currentIndex];
-    predictedPos = [currentPos[0], currentPos[1]];
-
-    if (Math.random() < 1) {
-      const directions = [
-        [0, 1],
-        [1, 0],
-        [0, -1],
-        [-1, 0],
-      ];
-      const randomDir =
-        directions[Math.floor(Math.random() * directions.length)];
-      predictedPos[0] += randomDir[0];
-      predictedPos[1] += randomDir[1];
-      predictedPos[0] = Math.max(0, Math.min(GRID_SIZE - 1, predictedPos[0]));
-      predictedPos[1] = Math.max(0, Math.min(GRID_SIZE - 1, predictedPos[1]));
-    }
-
-    if (isValidShotPosition(predictedPos[0], predictedPos[1])) {
-      defenderShots[defender].push([predictedPos[0], predictedPos[1]]);
-      actions.push(
-        `Defender ${defender} shot at (${predictedPos[1]},${predictedPos[0]})`
-      );
-      continue;
-    }
-
-  let emptyCells = [];
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-        if (isValidShotPosition(r, c)) {
-        emptyCells.push([r, c]);
-      }
-    }
-  }
-  if (emptyCells.length > 0) {
-    let randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      defenderShots[defender].push(randomCell);
-      actions.push(
-        `Defender ${defender} random shot at (${randomCell[1]},${randomCell[0]})`
-      );
-    }
-  }
-}
+// Removed autoSelectShots function
 
 function nextTurn() {
   if (gameOver) return;
@@ -824,9 +699,9 @@ function nextTurn() {
           actions.push(`Attacker ${atk.id} destroyed Defender ${defender}`);
         }
       } else {
-          remainingAttackers.push(atk);
-        }
+        remainingAttackers.push(atk);
       }
+    }
   });
   
   destroyedDefenders.forEach((defenderPos) => {
@@ -837,8 +712,6 @@ function nextTurn() {
   defenderShots = { A: [], B: [] }; // Reset shots to empty
   updateAttackerHistory();
   updateDefenderShotHistory();
-  
-  // Removed autoSelectShots() call here
   
   drawBoardAndPaths();
 
@@ -997,14 +870,14 @@ canvas.addEventListener("click", function(e) {
   
   if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
   
-    hoveredCell = [row, col];
+  hoveredCell = [row, col];
   if (!isValidShotPosition(row, col)) return;
   
   let defender = (shotToggle % 2 === 0) ? "A" : "B";
   shotToggle++;
   
   defenderShots[defender] = [[row, col]];
-  defenderShotHistory[defender][0]=defenderShots[defender][0];
+  defenderShotHistory[defender][0] = defenderShots[defender][0];
   actions.push(
     "Defender " + defender + 
     " selected shot at " + 
@@ -1012,8 +885,8 @@ canvas.addEventListener("click", function(e) {
     (row + 1)
   );
   
-    updateActionLog();
-    drawBoardAndPaths();
+  updateActionLog();
+  drawBoardAndPaths();
 });
 document.getElementById('makePredictionsBtn').addEventListener('click', logHistoryToBoth);
 newGameBtn.addEventListener("click", newGame);
@@ -1024,12 +897,6 @@ actionLogBtn.addEventListener("click", function () {
 });
 togglePathsBtn.addEventListener("click", function () {
   showPaths = !showPaths;
-  drawBoardAndPaths();
-});
-autoSelectBtn.addEventListener("click", function () {
-  if (gameOver || autoPlayActive) return;
-  autoSelectShots();
-  updateActionLog();
   drawBoardAndPaths();
 });
 autoPlayBtn.addEventListener("click", toggleAutoPlay);
@@ -1217,7 +1084,3 @@ function evaluatePrediction(shots) {
     // Convert to score out of 10
     return Math.max(0, Math.min(10, (score / maxPossibleScore) * 10));
 }
-
-
-
-
