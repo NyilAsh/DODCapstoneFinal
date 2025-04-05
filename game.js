@@ -789,12 +789,10 @@ C: Current [${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]
    Prev2 [${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]}]
 
 === Defenders ===
-A Shots: Current [${defenderShotHistory['A'][0][1]},${defenderShotHistory['A'][0][0]}]
-         Prev1 [${defenderShotHistory['A'][1][1]},${defenderShotHistory['A'][1][0]}] 
+A Shots: Prev1 [${defenderShotHistory['A'][1][1]},${defenderShotHistory['A'][1][0]}] 
          Prev2 [${defenderShotHistory['A'][2][1]},${defenderShotHistory['A'][2][0]}]
 
-B Shots: Current [${defenderShotHistory['B'][0][1]},${defenderShotHistory['B'][0][0]}]
-         Prev1 [${defenderShotHistory['B'][1][1]},${defenderShotHistory['B'][1][0]}] 
+B Shots: Prev1 [${defenderShotHistory['B'][1][1]},${defenderShotHistory['B'][1][0]}] 
          Prev2 [${defenderShotHistory['B'][2][1]},${defenderShotHistory['B'][2][0]}]
   `;
 
