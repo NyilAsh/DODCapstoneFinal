@@ -70,9 +70,6 @@
       border-top: 1px dashed #444;
       margin: 5px 0;
     }
-    #actionLog hr.wavy {
-      border-top: 1px wavy #666;
-    }
     #statusMessage {
       margin-top: 10px;
       color: #ff4444;
@@ -83,31 +80,26 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-      display: none;
       border: 1px solid #444;
-    }
-    .prediction-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-top: 10px;
-    }
-    .prediction {
-      text-align: center;
-    }
-    .prediction h3 {
-      margin: 0 0 10px 0;
-      color: #fff;
-    }
-    .prediction canvas {
-      border: 1px solid #444;
-      margin-bottom: 5px;
       width: 400px;
-      height: 400px;
-      background-color: #111;
     }
-    .prediction div {
+    #prediction-output {
+      background-color: #222;
+      border: 1px solid #444;
+      padding: 10px;
+      white-space: pre-wrap;
+      font-family: monospace;
       color: #4CAF50;
+      max-height: 600px;
+      overflow-y: auto;
+      border-radius: 4px;
+    }
+    .prediction-container h2 {
+      margin-top: 0;
+      color: #fff;
+      font-size: 1.2em;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
     }
   </style>
 </head>
@@ -122,27 +114,15 @@
         <button id="actionLogBtn">Toggle Action Log</button>
         <button id="togglePathsBtn">Toggle Paths</button>
         <button id="autoPlayBtn">Auto Play</button>
-        <button id="makePredictionsBtn">Make Predictions</button>
-
+        <button id="makePredictionsBtn">Show Predictions</button>
       </div>
       <div id="statusMessage"></div>
       <ul id="actionLog"></ul>
     </div>
     
-    <div class="prediction-container" id="prediction-container">
-      <h2>Next Turn Predictions</h2>
-      <div class="prediction-grid">
-        <div class="prediction">
-          <h3>Best Option</h3>
-          <canvas id="best-option" width="400" height="400"></canvas>
-          <div id="best-score">Score: 0.0</div>
-        </div>
-        <div class="prediction">
-          <h3>Second Best Option</h3>
-          <canvas id="second-best" width="400" height="400"></canvas>
-          <div id="second-score">Score: 0.0</div>
-        </div>
-      </div>
+    <div class="prediction-container" id="prediction-container" style="display: none;">
+      <h2>Current Prediction Data</h2>
+      <pre id="prediction-output"></pre>
     </div>
   </div>
   <script src="game.js"></script>

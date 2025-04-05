@@ -898,96 +898,44 @@ function updateDefenderShotHistory() {
 }
 
 function logHistoryToBoth() {
-  // Helper function to validate and format coordinates
-  const formatCoord = (val, max) => {
-    val = parseInt(val);
-    return (val >= 0 && val < max) ? val : -1;
-  };
+  // ... (keep all the existing data formatting code until csvRow creation) ...
 
-  // Ensure all attackers (A, B, C) have history
-  ['A', 'B', 'C'].forEach(id => {
-    if (!attackerHistory[id]) {
-      attackerHistory[id] = [
-        [-1, -1], [-1, -1], [-1, -1], [-1, -1]
-      ];
-    }
-  });
+  // Format the output for display
+  const formattedOutput = `
+=== Attackers ===
+A: Current [${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]
+   Prev1 [${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]}] 
+   Prev2 [${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]}]
 
-  // Ensure both defenders have history
-  ['A', 'B'].forEach(id => {
-    if (!defenderShotHistory[id]) {
-      defenderShotHistory[id] = [
-        [-1, -1], [-1, -1], [-1, -1], [-1, -1]
-      ];
-    }
-  });
+B: Current [${attackerHistory['B'][0][1]},${attackerHistory['B'][0][0]}]
+   Prev1 [${attackerHistory['B'][1][1]},${attackerHistory['B'][1][0]}] 
+   Prev2 [${attackerHistory['B'][2][1]},${attackerHistory['B'][2][0]}]
 
-  const csvRow = [
-    // CURRENT POSITIONS FIRST (A_Cur, B_cur, C_cur, SA_cur, SB_Cur)
-    formatCoord(attackerHistory['A'][0][1], GRID_SIZE), // A_Cur x
-    formatCoord(attackerHistory['A'][0][0], GRID_SIZE), // A_Cur y
-    formatCoord(attackerHistory['A'][1][1], GRID_SIZE), // AA2 x (prev1)
-    formatCoord(attackerHistory['A'][1][0], GRID_SIZE), // AA2 y (prev1)
-    formatCoord(attackerHistory['A'][2][1], GRID_SIZE), // AA1 x (prev2)
-    formatCoord(attackerHistory['A'][2][0], GRID_SIZE), // AA1 y (prev2)
-    
-    // Attacker B - Current + 2 most recent positions
-    formatCoord(attackerHistory['B'][0][1], GRID_SIZE), // B_Cur x
-    formatCoord(attackerHistory['B'][0][0], GRID_SIZE), // B_Cur y
-    formatCoord(attackerHistory['B'][1][1], GRID_SIZE), // AB2 x (prev1)
-    formatCoord(attackerHistory['B'][1][0], GRID_SIZE), // AB2 y (prev1)
-    formatCoord(attackerHistory['B'][2][1], GRID_SIZE), // AB1 x (prev2)
-    formatCoord(attackerHistory['B'][2][0], GRID_SIZE), // AB1 y (prev2),
-    
-    // Attacker C - Current + 2 most recent positions
-    formatCoord(attackerHistory['C'][0][1], GRID_SIZE), // C_Cur x
-    formatCoord(attackerHistory['C'][0][0], GRID_SIZE), // C_Cur y
-    formatCoord(attackerHistory['C'][1][1], GRID_SIZE), // AC2 x (prev1)
-    formatCoord(attackerHistory['C'][1][0], GRID_SIZE), // AC2 y (prev1)
-    formatCoord(attackerHistory['C'][2][1], GRID_SIZE), // AC1 x (prev2)
-    formatCoord(attackerHistory['C'][2][0], GRID_SIZE), // AC1 y (prev2),
-    
-    // Defender A Shots - Current + 2 most recent
-    formatCoord(defenderShotHistory['A'][0][1], GRID_SIZE), // SA_Cur x
-    formatCoord(defenderShotHistory['A'][0][0], GRID_SIZE), // SA_Cur y
-    formatCoord(defenderShotHistory['A'][1][1], GRID_SIZE), // SA2 x (prev1)
-    formatCoord(defenderShotHistory['A'][1][0], GRID_SIZE), // SA2 y (prev1)
-    formatCoord(defenderShotHistory['A'][2][1], GRID_SIZE), // SA1 x (prev2)
-    formatCoord(defenderShotHistory['A'][2][0], GRID_SIZE), // SA1 y (prev2),
-    
-    // Defender B Shots - Current + 2 most recent
-    formatCoord(defenderShotHistory['B'][0][1], GRID_SIZE), // SB_Cur x
-    formatCoord(defenderShotHistory['B'][0][0], GRID_SIZE), // SB_Cur y
-    formatCoord(defenderShotHistory['B'][1][1], GRID_SIZE), // SB2 x (prev1)
-    formatCoord(defenderShotHistory['B'][1][0], GRID_SIZE), // SB2 y (prev1)
-    formatCoord(defenderShotHistory['B'][2][1], GRID_SIZE), // SB1 x (prev2)
-    formatCoord(defenderShotHistory['B'][2][0], GRID_SIZE)
-  ];
+C: Current [${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]
+   Prev1 [${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]}] 
+   Prev2 [${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]}]
 
-  console.log("Logging positions to server:", csvRow);
+=== Defenders ===
+A Shots: Current [${defenderShotHistory['A'][0][1]},${defenderShotHistory['A'][0][0]}]
+         Prev1 [${defenderShotHistory['A'][1][1]},${defenderShotHistory['A'][1][0]}] 
+         Prev2 [${defenderShotHistory['A'][2][1]},${defenderShotHistory['A'][2][0]}]
 
-  // Send data to servers
-  fetch('http://localhost:5000/log_history', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(csvRow),
-  })
-  .then(response => response.json())
-  .then(data => console.log("CSV logger response:", data))
-  .catch((error) => {
-    console.error('Error logging history to CSV:', error);
-  });
+B Shots: Current [${defenderShotHistory['B'][0][1]},${defenderShotHistory['B'][0][0]}]
+         Prev1 [${defenderShotHistory['B'][1][1]},${defenderShotHistory['B'][1][0]}] 
+         Prev2 [${defenderShotHistory['B'][2][1]},${defenderShotHistory['B'][2][0]}]
+  `;
 
-  fetch('http://localhost:5001/log_data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(csvRow),
-  })
-  .then(response => response.json())
-  .then(data => console.log("Extra processing response:", data))
-  .catch((error) => {
-    console.error("Error sending data to extra processing server:", error);
-  });
+  // Display in UI
+  const outputElement = document.getElementById('prediction-output');
+  outputElement.textContent = formattedOutput;
+  
+  // Show the prediction container
+  const predictionContainer = document.getElementById('prediction-container');
+  predictionContainer.style.display = 'block';
+  
+  // Optional: Add temporary status message
+  statusMessage.textContent = "Prediction data displayed";
+  setTimeout(() => statusMessage.textContent = "", 2000);
 }
 
 function createSeparator(character) {
