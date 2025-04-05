@@ -871,10 +871,9 @@ canvas.addEventListener("click", function(e) {
   defenderShotHistory[defender][0] = defenderShots[defender][0];
   actions.push(
     "Defender " + defender + 
-    " selected shot at " + 
-    String.fromCharCode(65 + col) + 
-    (row + 1)
+    " selected shot at (" + col + "," + row + ")"
   );
+  
   
   updateActionLog();
   drawBoardAndPaths();
