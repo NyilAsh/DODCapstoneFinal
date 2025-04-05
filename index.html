@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Defense Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      margin: 20px;
+    }
+    .game-container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .board-container {
+      background-color: #111;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    #gameCanvas {
+      border: 1px solid #444;
+      margin-bottom: 10px;
+      background-color: #111;
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #444;
+    }
+    button:disabled {
+      background-color: #222;
+      color: #666;
+      cursor: not-allowed;
+    }
+    #actionLog {
+      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #444;
+      padding: 10px;
+      width: 300px;
+      margin-top: 10px;
+      background-color: #222;
+      color: #fff;
+      list-style-type: none;
+      padding-left: 10px;
+    }
+    #actionLog li {
+      margin: 3px 0;
+      padding: 2px 0;
+    }
+    #actionLog hr {
+      border: none;
+      border-top: 1px dashed #444;
+      margin: 5px 0;
+    }
+    #actionLog hr.wavy {
+      border-top: 1px wavy #666;
+    }
+    #statusMessage {
+      margin-top: 10px;
+      color: #ff4444;
+      font-weight: bold;
+    }
+    .prediction-container {
+      background-color: #111;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      display: none;
+      border: 1px solid #444;
+    }
+    .prediction-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .prediction {
+      text-align: center;
+    }
+    .prediction h3 {
+      margin: 0 0 10px 0;
+      color: #fff;
+    }
+    .prediction canvas {
+      border: 1px solid #444;
+      margin-bottom: 5px;
+      width: 400px;
+      height: 400px;
+      background-color: #111;
+    }
+    .prediction div {
+      color: #4CAF50;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="board-container">
+      <canvas id="gameCanvas" width="750" height="750"></canvas>
+      <div class="controls">
+        <button id="newGameBtn">New Game</button>
+        <button id="nextTurnBtn">Next Turn</button>
+        <button id="autoSelectBtn">Auto Select Shots</button>
+        <button id="actionLogBtn">Toggle Action Log</button>
+        <button id="togglePathsBtn">Toggle Paths</button>
+        <button id="autoPlayBtn">Auto Play</button>
+        <button id="generatePredictionsBtn">Generate Predictions</button>
+        <button id="makePredictionsBtn">Make Predictions</button>
+
+      </div>
+      <div id="statusMessage"></div>
+      <ul id="actionLog"></ul>
+    </div>
+    
+    <div class="prediction-container" id="prediction-container">
+      <h2>Next Turn Predictions</h2>
+      <div class="prediction-grid">
+        <div class="prediction">
+          <h3>Best Option</h3>
+          <canvas id="best-option" width="400" height="400"></canvas>
+          <div id="best-score">Score: 0.0</div>
+        </div>
+        <div class="prediction">
+          <h3>Second Best Option</h3>
+          <canvas id="second-best" width="400" height="400"></canvas>
+          <div id="second-score">Score: 0.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
