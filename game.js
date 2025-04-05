@@ -156,9 +156,20 @@ function createEmptyBoard() {
 }
 
 function placeDefenders(boardArr) {
-  boardArr[1][2] = "A";
-  boardArr[2][7] = "B";
+  let pos1 = Math.floor(Math.random() * 10);
+  let pos2 = Math.floor(Math.random() * 10);
+  
+  while (pos1 === pos2) {
+    pos2 = Math.floor(Math.random() * 10);
+  }
+  
+  const Apos = Math.min(pos1, pos2);
+  const Bpos = Math.max(pos1, pos2);
+  
+  boardArr[0][Apos] = "A";
+  boardArr[0][Bpos] = "B";
 }
+
 
 function generateManhattanPath(r0, c0, r1, c1) {
   let path = [];
@@ -177,7 +188,8 @@ function generateManhattanPath(r0, c0, r1, c1) {
   return path;
 }
 
-function generateSmoothManhattanCurvePath(r0, c0, r1, c1) {
+function generateSmoothManhattanCurvePath(r0, c0, r1, c1) 
+{
   let points = [];
   let midR = (r0 + r1) / 2 - 2;
   let midC = (c0 + c1) / 2;
@@ -775,7 +787,7 @@ function logHistoryToBoth() {
 
   // Format the output for display
   const formattedOutput = `
-=== Attackers ===
+=== Attackers Information ===
 A: Current [${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]
    Prev1 [${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]}] 
    Prev2 [${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]}]
@@ -797,9 +809,6 @@ C: Current [${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]
   const predictionContainer = document.getElementById('prediction-container');
   predictionContainer.style.display = 'block';
   
-  // Optional: Add temporary status message
-  statusMessage.textContent = "Prediction data displayed";
-  setTimeout(() => statusMessage.textContent = "", 2000);
 }
 
 function createSeparator(character) {
