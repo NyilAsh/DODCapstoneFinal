@@ -525,7 +525,7 @@ function newGame() {
   board = createEmptyBoard();
   placeDefenders(board);
   placeAttackers();
-  defenderShots = { A: [], B: [] };
+  defenderShots = { A: [], B: [] }; // Start with empty shots
   hoveredCell = null;
   
   defenderShotHistory = {
@@ -544,8 +544,7 @@ function newGame() {
     ];
   }
   
-  autoSelectShots();
-  updateDefenderShotHistory();
+  updateDefenderShotHistory(); // Removed autoSelectShots() call here
   
   trainingData.push(JSON.parse(JSON.stringify(board)));
   drawBoardAndPaths();
@@ -823,11 +822,11 @@ function nextTurn() {
           board[defenderPos[0]][defenderPos[1]] = 0;
           destroyedDefenders.push(defenderPos);
           actions.push(`Attacker ${atk.id} destroyed Defender ${defender}`);
+        }
+      } else {
+          remainingAttackers.push(atk);
+        }
       }
-    } else {
-        remainingAttackers.push(atk);
-      }
-    }
   });
   
   destroyedDefenders.forEach((defenderPos) => {
@@ -835,17 +834,12 @@ function nextTurn() {
   });
 
   attackers = remainingAttackers;
-  defenderShots = { A: [], B: [] };
-  console.log("before",attackerHistory)
+  defenderShots = { A: [], B: [] }; // Reset shots to empty
   updateAttackerHistory();
-  console.log("after",attackerHistory)
-
-  autoSelectShots();
-
-  console.log("before",defenderShotHistory)
   updateDefenderShotHistory();
-  console.log("after",defenderShotHistory)
-
+  
+  // Removed autoSelectShots() call here
+  
   drawBoardAndPaths();
 
   if (attackers.length === 0) endGame("Defenders win!");
@@ -1276,72 +1270,6 @@ function evaluatePrediction(shots) {
     return Math.max(0, Math.min(10, (score / maxPossibleScore) * 10));
 }
 
-function generatePredictions() {
-    try {
-        console.log("Starting prediction generation...");
-        
-        const predictionContainer = document.getElementById('prediction-container');
-        if (predictionContainer) {
-            predictionContainer.style.display = 'block';
-        }
-        
-        const bestCanvas = document.getElementById('best-option');
-        const secondBestCanvas = document.getElementById('second-best');
-        
-        if (!bestCanvas || !secondBestCanvas) {
-            console.error('Prediction canvases not found');
-            return;
-        }
 
-        // Generate and score predictions
-        const possibleShots = generatePossibleShots();
-        console.log("Generated predictions:", possibleShots);
-
-        const scoredPredictions = possibleShots.map(shots => ({
-            shots,
-            score: evaluatePrediction(shots)
-        })).sort((a, b) => b.score - a.score);
-
-        // Draw best prediction
-        if (scoredPredictions.length > 0) {
-            drawPredictionCanvas(
-                bestCanvas,
-                board,
-                attackers,
-                getCurrentDefenders(),
-                scoredPredictions[0].shots,
-                0
-            );
-
-            const bestScore = document.getElementById('best-score');
-            if (bestScore) {
-                bestScore.textContent = `Score: ${scoredPredictions[0].score.toFixed(1)}/10`;
-            }
-        }
-
-        // Draw second best prediction
-        if (scoredPredictions.length > 1) {
-            drawPredictionCanvas(
-                secondBestCanvas,
-                board,
-                attackers,
-                getCurrentDefenders(),
-                scoredPredictions[1].shots,
-                0
-            );
-
-            const secondScore = document.getElementById('second-score');
-            if (secondScore) {
-                secondScore.textContent = `Score: ${scoredPredictions[1].score.toFixed(1)}/10`;
-            }
-        }
-
-        console.log("Prediction generation complete");
-
-    } catch (error) {
-        console.error('Error generating predictions:', error);
-        statusMessage.textContent = "Error generating predictions";
-    }
-}
 
 
