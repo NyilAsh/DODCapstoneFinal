@@ -718,44 +718,67 @@ function logAttackerData() {
     }).catch(() => isLoggerConnected = false);
   }
 }
-
 function nextTurn() {
   if (gameOver) return;
+  
+  // 1. Save PRE-move state for history
+  const preMoveState = {
+    attackers: {},
+    defenders: JSON.parse(JSON.stringify(defenderShots)),
+  };
 
-  const preMoveState = { /* ... keep existing code ... */ };
+  attackers.forEach((atk) => {
+    preMoveState.attackers[atk.id] = [...atk.steppedPath[atk.currentIndex]];
+  });
 
-  // Existing movement logic
   const movedAttackers = [];
-  attackers.forEach(atk => {
+  attackers.forEach((atk) => {
     if (atk.currentIndex < atk.steppedPath.length - 1) {
       atk.currentIndex++;
       movedAttackers.push(atk);
-      actions.push(`Attacker ${atk.id} moved to (${atk.steppedPath[atk.currentIndex][1]},${atk.steppedPath[atk.currentIndex][0]})`);
+      actions.push(
+        `Attacker ${atk.id} moved to (${atk.steppedPath[atk.currentIndex][1]},${atk.steppedPath[atk.currentIndex][0]})`
+      );
     }
   });
 
   const remainingAttackers = [];
   const destroyedDefenders = [];
-  
-  attackers.forEach(atk => {
+
+  attackers.forEach((atk) => {
     const currentPos = atk.steppedPath[atk.currentIndex];
     let wasHit = false;
 
+    // Check for shot hits
     Object.entries(defenderShots).forEach(([defender, shots]) => {
-      if (shots.some(shot => shot[0] === currentPos[0] && shot[1] === currentPos[1])) {
-        actions.push(`Defender ${defender} hit Attacker ${atk.id} at (${currentPos[1]},${currentPos[0]})`);
+      if (
+        shots.some(
+          (shot) => shot[0] === currentPos[0] && shot[1] === currentPos[1]
+        )
+      ) {
+        actions.push(
+          `Defender ${defender} hit Attacker ${atk.id} at (${currentPos[1]},${currentPos[0]})`
+        );
         wasHit = true;
       }
     });
 
     if (!wasHit) {
-      // Modified condition to prevent premature destruction
-      if (atk.currentIndex >= atk.steppedPath.length - 1) {
+      // Check for defender collision at current position
+      const currentDefender = board[currentPos[0]]?.[currentPos[1]];
+      if (typeof currentDefender === "string") {
+        // Destroy both attacker and defender
+        board[currentPos[0]][currentPos[1]] = 0;
+        destroyedDefenders.push([currentPos[0], currentPos[1], currentDefender]);
+        actions.push(`Collision: Attacker ${atk.id} destroyed Defender ${currentDefender}`);
+      }
+      // Original target destruction logic
+      else if (atk.currentIndex >= atk.steppedPath.length - 1) {
         const defenderPos = atk.baseTarget;
-        const defender = board[defenderPos[0]][defenderPos[1]];
+        const defender = board[defenderPos[0]]?.[defenderPos[1]];
         if (typeof defender === "string") {
           board[defenderPos[0]][defenderPos[1]] = 0;
-          destroyedDefenders.push(defenderPos);
+          destroyedDefenders.push([...defenderPos, defender]);
           actions.push(`Attacker ${atk.id} destroyed Defender ${defender}`);
         }
       } else {
@@ -764,18 +787,20 @@ function nextTurn() {
     }
   });
 
-  // Update game state
-  destroyedDefenders.forEach(redirectAttackers);
-  attackers = remainingAttackers;
-  defenderShots = { A: [], B: [] };
+  // Redirect attackers for ALL destroyed defenders
+  destroyedDefenders.forEach((defenderPos) => {
+    redirectAttackers(defenderPos);
+  });
 
+  attackers = remainingAttackers;
+  defenderShots = { A: [], B: [] }; // Reset shots
   updateAttackerHistory();
   updateDefenderShotHistory();
-  logAttackerData(); // Safe logging
+  logAttackerData();
   
   drawBoardAndPaths();
-  
-  // Modified end conditions with debug checks
+
+  // End game conditions
   if (attackers.length === 0) {
     console.log("Ending game: All attackers destroyed");
     endGame("Defenders win!");
@@ -784,7 +809,7 @@ function nextTurn() {
     console.log("Ending game: All defenders destroyed");
     endGame("Attackers win!");
   }
-  
+
   updateActionLog();
 }
 
