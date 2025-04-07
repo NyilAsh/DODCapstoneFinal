@@ -171,70 +171,109 @@ function placeDefenders(boardArr) {
 }
 
 
-function generateManhattanPath(r0, c0, r1, c1) {
-  let path = [];
-  let current = [r0, c0];
-  path.push([r0, c0]);
-  let stepCol = c1 > c0 ? 1 : -1;
-  while (current[1] !== c1) {
-    current = [current[0], current[1] + stepCol];
-    path.push([current[0], current[1]]);
+function straightPath(r0, c0, r1, c1) {
+  let path = [[r0, c0]];
+  let currentR = r0;
+  let currentC = c0;
+  
+  // Calculate direction and absolute differences
+  const dr = r1 - r0;
+  const dc = c1 - c0;
+  const stepR = dr > 0 ? 1 : -1;
+  const stepC = dc > 0 ? 1 : -1;
+  const absDr = Math.abs(dr);
+  const absDc = Math.abs(dc);
+  
+  // Bresenham's algorithm implementation
+  let error = 0;
+  let verticalFirst = absDr > absDc; // Prioritize major axis
+  
+  while (currentR !== r1 || currentC !== c1) {
+      if (verticalFirst) {
+          if (currentR !== r1) {
+              currentR += stepR;
+              path.push([currentR, currentC]);
+              error += absDc;
+          }
+          if (error >= absDr && currentC !== c1) {
+              currentC += stepC;
+              path.push([currentR, currentC]);
+              error -= absDr;
+          }
+      } else {
+          if (currentC !== c1) {
+              currentC += stepC;
+              path.push([currentR, currentC]);
+              error += absDr;
+          }
+          if (error >= absDc && currentR !== r1) {
+              currentR += stepR;
+              path.push([currentR, currentC]);
+              error -= absDc;
+          }
+      }
   }
-  let stepRow = r1 > r0 ? 1 : -1;
-  while (current[0] !== r1) {
-    current = [current[0] + stepRow, current[1]];
-    path.push([current[0], current[1]]);
-  }
+  
   return path;
 }
+function RandomPath(r0, c0, r1, c1) {
+  let dr = r1 - r0;
+  let dc = c1 - c0;
 
-function generateSmoothManhattanCurvePath(r0, c0, r1, c1) 
-{
-  let points = [];
-  let midR = (r0 + r1) / 2 - 2;
-  let midC = (c0 + c1) / 2;
-  for (let t = 0; t <= 1; t += 0.05) {
-    let x = (1 - t) * (1 - t) * c0 + 2 * (1 - t) * t * midC + t * t * c1;
-    let y = (1 - t) * (1 - t) * r0 + 2 * (1 - t) * t * midR + t * t * r1;
-    points.push([y, x]);
+  let verticalSteps = [];
+  let horizontalSteps = [];
+
+  // Determine vertical steps direction
+  if (dr > 0) {
+      verticalSteps = Array(dr).fill('down');
+  } else if (dr < 0) {
+      verticalSteps = Array(-dr).fill('up');
   }
-  let smooth = [];
-  for (let i = 1; i < points.length - 1; i++) {
-    let avgRow = (points[i - 1][0] + points[i][0] + points[i + 1][0]) / 3;
-    let avgCol = (points[i - 1][1] + points[i][1] + points[i + 1][1]) / 3;
-    smooth.push([avgRow, avgCol]);
+
+  // Determine horizontal steps direction
+  if (dc > 0) {
+      horizontalSteps = Array(dc).fill('right');
+  } else if (dc < 0) {
+      horizontalSteps = Array(-dc).fill('left');
   }
-  smooth.unshift(points[0]);
-  smooth.push(points[points.length - 1]);
-  let manhattanPath = [];
-  manhattanPath.push([Math.round(smooth[0][0]), Math.round(smooth[0][1])]);
-  for (let i = 1; i < smooth.length; i++) {
-    let prev = manhattanPath[manhattanPath.length - 1];
-    let cur = [Math.round(smooth[i][0]), Math.round(smooth[i][1])];
-    let dr = cur[0] - prev[0];
-    let dc = cur[1] - prev[1];
-    if (dr !== 0 && dc !== 0) {
-      if (Math.abs(dr) >= Math.abs(dc)) {
-        cur = [prev[0] + (dr > 0 ? 1 : -1), prev[1]];
-      } else {
-        cur = [prev[0], prev[1] + (dc > 0 ? 1 : -1)];
+
+  // Combine and shuffle the steps
+  let allSteps = verticalSteps.concat(horizontalSteps);
+  for (let i = allSteps.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allSteps[i], allSteps[j]] = [allSteps[j], allSteps[i]];
+  }
+
+  // Generate the path
+  let currentR = r0;
+  let currentC = c0;
+  let path = [[currentR, currentC]];
+
+  for (const step of allSteps) {
+      switch (step) {
+          case 'up':
+              currentR -= 1;
+              break;
+          case 'down':
+              currentR += 1;
+              break;
+          case 'left':
+              currentC -= 1;
+              break;
+          case 'right':
+              currentC += 1;
+              break;
       }
-    }
-    if (cur[0] !== prev[0] || cur[1] !== prev[1]) {
-      manhattanPath.push(cur);
-    }
+      path.push([currentR, currentC]);
   }
-  let unique = [];
-  for (let i = 0; i < manhattanPath.length; i++) {
-    if (
-      i === 0 ||
-      manhattanPath[i][0] !== manhattanPath[i - 1][0] ||
-      manhattanPath[i][1] !== manhattanPath[i - 1][1]
-    ) {
-      unique.push(manhattanPath[i]);
-    }
+
+  // Ensure the path ends at the target
+  const lastStep = path[path.length - 1];
+  if (lastStep[0] !== r1 || lastStep[1] !== c1) {
+      path.push([r1, c1]);
   }
-  return unique;
+
+  return path;
 }
 
 function nearestDefender(spawn) {
@@ -270,13 +309,13 @@ function placeAttackers() {
     let speed = Math.random() < 0.5 ? 1 : 2;
     let fullPath =
       pathType === "straight"
-        ? generateManhattanPath(
+        ? straightPath(
             spawn[0],
             spawn[1],
             chosenTarget[0],
             chosenTarget[1]
           )
-        : generateSmoothManhattanCurvePath(
+        : RandomPath(
             spawn[0],
             spawn[1],
             chosenTarget[0],
@@ -321,13 +360,13 @@ function placeAttackers() {
     let speed = Math.random() < 0.5 ? 1 : 2;
     let fullPath =
       pathType === "straight"
-        ? generateManhattanPath(
+        ? straightPath(
             spawn[0],
             spawn[1],
             chosenTarget[0],
             chosenTarget[1]
           )
-        : generateSmoothManhattanCurvePath(
+        : RandomPath(
             spawn[0],
             spawn[1],
             chosenTarget[0],
@@ -611,7 +650,7 @@ function redirectAttackers(destroyedDefender) {
         }
       }
       atk.baseTarget = newTarget;
-      let fullPath = generateManhattanPath(
+      let fullPath = straightPath(
         atk.steppedPath[atk.currentIndex][0],
         atk.steppedPath[atk.currentIndex][1],
         newTarget[0],
