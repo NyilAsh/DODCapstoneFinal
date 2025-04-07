@@ -719,10 +719,10 @@ function nextTurn() {
   destroyedDefenders.forEach((defenderPos) => {
     redirectAttackers(defenderPos);
   });
+  updateAttackerHistory();
 
   attackers = remainingAttackers;
   defenderShots = { A: [], B: [] }; // Reset shots to empty
-  updateAttackerHistory();
   updateDefenderShotHistory();
   
   drawBoardAndPaths();
