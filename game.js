@@ -788,20 +788,23 @@ function logHistoryToBoth() {
   // Format the output for display
   const formattedOutput = `
 === Attackers Information ===
-A: Current-3 [${attackerHistory['A'][3][1]},${attackerHistory['A'][3][0]}]
-   Current-2 [${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]}]
-   Current-1 [${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]}]
-   Current [${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]
+A: Attacker A Current and Previous 3 Turns [` +
+  `${attackerHistory['A'][3][1]},${attackerHistory['A'][3][0]},` +
+  `${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]},` +
+  `${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]},` +
+  `${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]
 
-B: Current-3 [${attackerHistory['B'][3][1]},${attackerHistory['B'][3][0]}]
-   Current-2 [${attackerHistory['B'][2][1]},${attackerHistory['B'][2][0]}]
-   Current-1 [${attackerHistory['B'][1][1]},${attackerHistory['B'][1][0]}]
-   Current [${attackerHistory['B'][0][1]},${attackerHistory['B'][0][0]}]
+B: Attacker B Current and Previous 3 Turns [` +
+  `${attackerHistory['B'][3][1]},${attackerHistory['B'][3][0]},` +
+  `${attackerHistory['B'][2][1]},${attackerHistory['B'][2][0]},` +
+  `${attackerHistory['B'][1][1]},${attackerHistory['B'][1][0]},` +
+  `${attackerHistory['B'][0][1]},${attackerHistory['B'][0][0]}]
 
-C: Current-3 [${attackerHistory['C'][3][1]},${attackerHistory['C'][3][0]}]
-   Current-2 [${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]}]
-   Current-1 [${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]}]
-   Current [${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]
+C: Attacker C Current and Previous 3 Turns [` +
+  `${attackerHistory['C'][3][1]},${attackerHistory['C'][3][0]},` +
+  `${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]},` +
+  `${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]},` +
+  `${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]
   `;
 
   // Display in UI
