@@ -3,6 +3,9 @@ let attackerImg = new Image();
 let redSquareImg = new Image();
 let blueSquareImg = new Image();
 
+const LOGGER_SERVER = 'http://localhost:5000/log';
+let isLoggerConnected = false;
+
 function loadGameImages() {
     console.log("Loading game images...");
     
@@ -652,7 +655,34 @@ function isValidShotPosition(row, col) {
   );
 }
 
-// Removed autoSelectShots function
+function logAttackerData() {
+  const logData = [];
+  
+  ['A', 'B', 'C'].forEach(id => {
+    const history = attackerHistory[id] || [[-1, -1], [-1, -1], [-1, -1], [-1, -1]];
+    
+    // Only log if current position is valid (not [-1,-1])
+    if (history[0][0] !== -1 || history[0][1] !== -1) {
+      const positions = [];
+      // Format: T-3_col, T-3_row, ..., current_col, current_row
+      for (let i = history.length - 1; i >= 0; i--) {
+        positions.push(
+          history[i][1], // Column
+          history[i][0]  // Row
+        );
+      }
+      logData.push(positions);
+    }
+  });
+
+  if (logData.length > 0) {
+    fetch(LOGGER_SERVER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(logData)
+    }).catch(() => isLoggerConnected = false);
+  }
+}
 
 function nextTurn() {
   if (gameOver) return;
@@ -715,7 +745,17 @@ function nextTurn() {
       }
     }
   });
+  updateAttackerHistory();
+  updateDefenderShotHistory();
   
+  // Add logging call
+  logAttackerData();
+
+  // Rest of nextTurn code
+  drawBoardAndPaths();
+  if (attackers.length === 0) endGame("Defenders win!");
+  if (countDefenders() === 0) endGame("Attackers win!");
+  updateActionLog();
   destroyedDefenders.forEach((defenderPos) => {
     redirectAttackers(defenderPos);
   });
@@ -783,40 +823,47 @@ function updateDefenderShotHistory() {
 }
 
 function logHistoryToBoth() {
-  // ... (keep all the existing data formatting code until csvRow creation) ...
-
   // Format the output for display
-  const formattedOutput = `
-=== Attackers Information ===
-A: Attacker A Current and Previous 3 Turns [` +
-  `${attackerHistory['A'][3][1]},${attackerHistory['A'][3][0]},` +
-  `${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]},` +
-  `${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]},` +
-  `${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]
+  const formattedOutput = 
+    `=== Attackers Information ===\n` +
+    `A: [${attackerHistory['A'][3][1]},${attackerHistory['A'][3][0]},` +
+    `${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]},` +
+    `${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]},` +
+    `${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]\n` +
+    `B: [${attackerHistory['B'][3][1]},${attackerHistory['B'][3][0]},` +
+    `${attackerHistory['B'][2][1]},${attackerHistory['B'][2][0]},` +
+    `${attackerHistory['B'][1][1]},${attackerHistory['B'][1][0]},` +
+    `${attackerHistory['B'][0][1]},${attackerHistory['B'][0][0]}]\n` +
+    `C: [${attackerHistory['C'][3][1]},${attackerHistory['C'][3][0]},` +
+    `${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]},` +
+    `${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]},` +
+    `${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]`;
 
-B: Attacker B Current and Previous 3 Turns [` +
-  `${attackerHistory['B'][3][1]},${attackerHistory['B'][3][0]},` +
-  `${attackerHistory['B'][2][1]},${attackerHistory['B'][2][0]},` +
-  `${attackerHistory['B'][1][1]},${attackerHistory['B'][1][0]},` +
-  `${attackerHistory['B'][0][1]},${attackerHistory['B'][0][0]}]
+  document.getElementById('prediction-output').textContent = formattedOutput;
+  document.getElementById('prediction-container').style.display = 'block';
 
-C: Attacker C Current and Previous 3 Turns [` +
-  `${attackerHistory['C'][3][1]},${attackerHistory['C'][3][0]},` +
-  `${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]},` +
-  `${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]},` +
-  `${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]
-  `;
+  // Prepare and send logger data
+  const logData = [];
+  ['A', 'B', 'C'].forEach(id => {
+    const history = attackerHistory[id];
+    if (history[0][0] !== -1) { // Only alive attackers
+      const positions = [];
+      // Format: Oldest -> Newest as [T-3, T-2, T-1, Current]
+      for (let i = history.length - 1; i >= 0; i--) {
+        positions.push(history[i][1], history[i][0]); // col, row
+      }
+      logData.push({ attackerID: id, positions });
+    }
+  });
 
-  // Display in UI
-  const outputElement = document.getElementById('prediction-output');
-  outputElement.textContent = formattedOutput;
-  
-  // Show the prediction container
-  const predictionContainer = document.getElementById('prediction-container');
-  predictionContainer.style.display = 'block';
-  
+  fetch(LOGGER_SERVER, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(logData)
+  })
+  .then(res => isLoggerConnected = res.ok)
+  .catch(() => isLoggerConnected = false);
 }
-
 function createSeparator(character) {
   const separator = document.createElement('hr');
   separator.style.border = 'none';
