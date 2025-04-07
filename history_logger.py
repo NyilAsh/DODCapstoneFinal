@@ -16,10 +16,12 @@ def init_csv():
 def log_data():
     try:
         data = request.get_json()
+        if not isinstance(data, list):
+            return {'status': 'error', 'message': 'Invalid data format'}, 400
+            
         with open(CSV_FILE, 'a', newline='') as f:
             writer = csv.writer(f)
             for entry in data:
-                # Ensure entry is a list and has exactly 8 elements
                 if isinstance(entry, list) and len(entry) == 8:
                     writer.writerow(entry)
         return {'status': 'success'}, 200

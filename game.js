@@ -699,19 +699,15 @@ function logAttackerData() {
   
   ['A', 'B', 'C'].forEach(id => {
     const history = attackerHistory[id] || [[-1, -1], [-1, -1], [-1, -1], [-1, -1]];
+    // Skip if current position is invalid
+    if (history[0][0] === -1 && history[0][1] === -1) return;
     
-    // Only log if current position is valid (not [-1,-1])
-    if (history[0][0] !== -1 || history[0][1] !== -1) {
-      const positions = [];
-      // Format: T-3_col, T-3_row, ..., current_col, current_row
-      for (let i = history.length - 1; i >= 0; i--) {
-        positions.push(
-          history[i][1], // Column
-          history[i][0]  // Row
-        );
-      }
-      logData.push(positions);
+    const positions = [];
+    // Collect positions from oldest (T-3) to current
+    for (let i = history.length - 1; i >= 0; i--) {
+      positions.push(history[i][1], history[i][0]); // col, row
     }
+    logData.push(positions);
   });
 
   if (logData.length > 0) {
@@ -725,53 +721,36 @@ function logAttackerData() {
 
 function nextTurn() {
   if (gameOver) return;
-  
-  // 1. Save PRE-move state for history
-  const preMoveState = {
-    attackers: {},
-    defenders: JSON.parse(JSON.stringify(defenderShots)),
-  };
 
-  attackers.forEach((atk) => {
-    preMoveState.attackers[atk.id] = [...atk.steppedPath[atk.currentIndex]];
-  });
+  const preMoveState = { /* ... keep existing code ... */ };
 
+  // Existing movement logic
   const movedAttackers = [];
-  attackers.forEach((atk) => {
+  attackers.forEach(atk => {
     if (atk.currentIndex < atk.steppedPath.length - 1) {
       atk.currentIndex++;
       movedAttackers.push(atk);
-      actions.push(
-        `Attacker ${atk.id} moved to (${atk.steppedPath[atk.currentIndex][1]},${atk.steppedPath[atk.currentIndex][0]})`
-      );
+      actions.push(`Attacker ${atk.id} moved to (${atk.steppedPath[atk.currentIndex][1]},${atk.steppedPath[atk.currentIndex][0]})`);
     }
   });
 
   const remainingAttackers = [];
   const destroyedDefenders = [];
-
-  attackers.forEach((atk) => {
+  
+  attackers.forEach(atk => {
     const currentPos = atk.steppedPath[atk.currentIndex];
     let wasHit = false;
 
     Object.entries(defenderShots).forEach(([defender, shots]) => {
-      if (
-        shots.some(
-          (shot) => shot[0] === currentPos[0] && shot[1] === currentPos[1]
-        )
-      ) {
-        actions.push(
-          `Defender ${defender} hit Attacker ${atk.id} at (${currentPos[1]},${currentPos[0]})`
-        );
+      if (shots.some(shot => shot[0] === currentPos[0] && shot[1] === currentPos[1])) {
+        actions.push(`Defender ${defender} hit Attacker ${atk.id} at (${currentPos[1]},${currentPos[0]})`);
         wasHit = true;
       }
     });
 
     if (!wasHit) {
-      if (
-        atk.currentIndex >=
-        atk.steppedPath.length - (atk.speed === 2 ? 2 : 1)
-      ) {
+      // Modified condition to prevent premature destruction
+      if (atk.currentIndex >= atk.steppedPath.length - 1) {
         const defenderPos = atk.baseTarget;
         const defender = board[defenderPos[0]][defenderPos[1]];
         if (typeof defender === "string") {
@@ -784,31 +763,28 @@ function nextTurn() {
       }
     }
   });
-  updateAttackerHistory();
-  updateDefenderShotHistory();
-  
-  // Add logging call
-  logAttackerData();
 
-  // Rest of nextTurn code
-  drawBoardAndPaths();
-  if (attackers.length === 0) endGame("Defenders win!");
-  if (countDefenders() === 0) endGame("Attackers win!");
-  updateActionLog();
-  destroyedDefenders.forEach((defenderPos) => {
-    redirectAttackers(defenderPos);
-  });
-  updateAttackerHistory();
-
+  // Update game state
+  destroyedDefenders.forEach(redirectAttackers);
   attackers = remainingAttackers;
-  defenderShots = { A: [], B: [] }; // Reset shots to empty
+  defenderShots = { A: [], B: [] };
+
+  updateAttackerHistory();
   updateDefenderShotHistory();
+  logAttackerData(); // Safe logging
   
   drawBoardAndPaths();
-
-  if (attackers.length === 0) endGame("Defenders win!");
-  if (countDefenders() === 0) endGame("Attackers win!");
-
+  
+  // Modified end conditions with debug checks
+  if (attackers.length === 0) {
+    console.log("Ending game: All attackers destroyed");
+    endGame("Defenders win!");
+  }
+  if (countDefenders() === 0) {
+    console.log("Ending game: All defenders destroyed");
+    endGame("Attackers win!");
+  }
+  
   updateActionLog();
 }
 
