@@ -903,6 +903,22 @@ function logHistoryToBoth() {
   })
   .then(res => isLoggerConnected = res.ok)
   .catch(() => isLoggerConnected = false);
+
+
+  fetch('http://localhost:5001', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(logData)
+  })
+  .then(response => {
+    console.log("Data successfully sent to server.py:", response);
+  })
+  .catch(error => {
+    console.error("Error sending data to server.py:", error);
+  });
+
+
+
 }
 function createSeparator(character) {
   const separator = document.createElement('hr');
