@@ -78,7 +78,7 @@ const autoPlayBtn = document.getElementById("autoPlayBtn");
 const generatePredictionsBtn = document.getElementById("generatePredictionsBtn");
 
 const GRID_SIZE = 10;
-const CELL_SIZE = 70;
+const CELL_SIZE = 80;
 let board = [];
 let attackers = [];
 let trainingData = [];
@@ -879,8 +879,8 @@ function logHistoryToBoth() {
     `${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]},` +
     `${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]`;
 
-  document.getElementById('prediction-output').textContent = formattedOutput;
-  document.getElementById('prediction-container').style.display = 'block';
+  // document.getElementById('prediction-output').textContent = formattedOutput;
+  // document.getElementById('prediction-container').style.display = 'block';
 
   // Prepare and send logger data
   const logData = [];
@@ -972,10 +972,17 @@ canvas.addEventListener("click", function(e) {
   if (gameOver || autoPlayActive) return;
   
   let rect = canvas.getBoundingClientRect();
-  let x = e.clientX - rect.left;
-  let y = e.clientY - rect.top;
-  let col = Math.floor((x - 25) / CELL_SIZE);
-  let row = GRID_SIZE - 1 - Math.floor((y - 20) / CELL_SIZE);
+
+  let scaleX = canvas.width / rect.width;
+  let scaleY = canvas.height / rect.height;
+  
+  let x = (e.clientX - rect.left) * scaleX;
+  let y = (e.clientY - rect.top) * scaleY;
+  
+  let offsetX = 25; 
+  let offsetY = 20; 
+  let col = Math.floor((x - offsetX) / CELL_SIZE);
+  let row = GRID_SIZE - 1 - Math.floor((y - offsetY) / CELL_SIZE);
   
   if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
   
@@ -988,14 +995,14 @@ canvas.addEventListener("click", function(e) {
   defenderShots[defender] = [[row, col]];
   defenderShotHistory[defender][0] = defenderShots[defender][0];
   actions.push(
-    "Defender " + defender + 
-    " selected shot at (" + col + "," + row + ")"
+    "Defender " + defender + " selected shot at (" + col + "," + row + ")"
   );
-  
   
   updateActionLog();
   drawBoardAndPaths();
 });
+
+
 document.getElementById('makePredictionsBtn').addEventListener('click', logHistoryToBoth);
 newGameBtn.addEventListener("click", newGame);
 nextTurnBtn.addEventListener("click", nextTurn);
