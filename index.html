@@ -3,110 +3,125 @@
 <head>
   <title>Defense Game</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #000;
-      color: #fff;
-      margin: 20px;
-    }
-    .game-container {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
-    }
-    .board-container {
-      background-color: #111;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    }
-    #gameCanvas {
-      border: 1px solid #444;
-      margin-bottom: 10px;
-      background-color: #111;
-    }
-    .controls {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 14px;
-      cursor: pointer;
-      background-color: #333;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 4px;
-    }
-    button:hover {
-      background-color: #444;
-    }
-    button:disabled {
-      background-color: #222;
-      color: #666;
-      cursor: not-allowed;
-    }
-    #actionLog {
-      display: none;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #444;
-      padding: 10px;
-      width: 300px;
-      margin-top: 10px;
-      background-color: #222;
-      color: #fff;
-      list-style-type: none;
-      padding-left: 10px;
-    }
-    #actionLog li {
-      margin: 3px 0;
-      padding: 2px 0;
-    }
-    #actionLog hr {
-      border: none;
-      border-top: 1px dashed #444;
-      margin: 5px 0;
-    }
-    #statusMessage {
-      margin-top: 10px;
-      color: #ff4444;
-      font-weight: bold;
-    }
-    .prediction-container {
-      background-color: #111;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-      border: 1px solid #444;
-      width: 400px;
-    }
-    #prediction-output {
-      background-color: #222;
-      border: 1px solid #444;
-      padding: 10px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      color: #4CAF50;
-      max-height: 600px;
-      overflow-y: auto;
-      border-radius: 4px;
-    }
-    .prediction-container h2 {
-      margin-top: 0;
-      color: #fff;
-      font-size: 1.2em;
-      border-bottom: 1px solid #444;
-      padding-bottom: 10px;
-    }
+/* Reset and ensure body takes full height */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* Body as a flex container to center content vertically & horizontally */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+/* Container that holds the board and controls, 
+   using column layout so buttons appear under the board */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center horizontally */
+  justify-content: center; /* center vertically if there's extra space */
+  min-height: 90vh; /* take up most of the viewport */
+}
+
+/* The board container with a background and padding */
+.board-container {
+  background-color: #111;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+}
+
+/* The actual game canvas */
+#gameCanvas {
+  border: 1px solid #f5f2f2;
+  background-color: #111;
+  /* Adjust these to your preference for size */
+  width: 700px;
+  height: 700px;
+  margin-bottom: 10px;
+}
+
+/* Center the buttons below the board */
+.controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Simple button styling */
+button {
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+button:hover {
+  background-color: #444;
+}
+button:disabled {
+  background-color: #222;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Hide the prediction container if you don't want it visible at all */
+.prediction-container {
+  display: none;
+}
+
+/* Keep the action log hidden by default. You can still toggle it if needed. */
+#actionLog {
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #444;
+  padding: 10px;
+  width: 300px;
+  margin-top: 10px;
+  background-color: #222;
+  color: #fff;
+  list-style-type: none;
+  padding-left: 10px;
+}
+#actionLog li {
+  margin: 3px 0;
+  padding: 2px 0;
+}
+#actionLog hr {
+  border: none;
+  border-top: 1px dashed #444;
+  margin: 5px 0;
+}
+
+/* Status message styling */
+#statusMessage {
+  margin-top: 10px;
+  color: #ff4444;
+  font-weight: bold;
+}
+
   </style>
 </head>
 <body>
   <div class="game-container">
     <div class="board-container">
-      <canvas id="gameCanvas" width="750" height="750"></canvas>
+      <canvas id="gameCanvas" width="850" height="850"></canvas>
       <div class="controls">
         <button id="newGameBtn">New Game</button>
         <button id="nextTurnBtn">Next Turn</button>

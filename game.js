@@ -78,7 +78,7 @@ const autoPlayBtn = document.getElementById("autoPlayBtn");
 const generatePredictionsBtn = document.getElementById("generatePredictionsBtn");
 
 const GRID_SIZE = 10;
-const CELL_SIZE = 70;
+const CELL_SIZE = 80;
 let board = [];
 let attackers = [];
 let trainingData = [];
@@ -879,8 +879,8 @@ function logHistoryToBoth() {
     `${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]},` +
     `${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]`;
 
-  document.getElementById('prediction-output').textContent = formattedOutput;
-  document.getElementById('prediction-container').style.display = 'block';
+  // document.getElementById('prediction-output').textContent = formattedOutput;
+  // document.getElementById('prediction-container').style.display = 'block';
 
   // Prepare and send logger data
   const logData = [];
