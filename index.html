@@ -3,14 +3,14 @@
 <head>
   <title>Defense Game</title>
   <style>
-/* Reset and ensure body takes full height */
+
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
 }
 
-/* Body as a flex container to center content vertically & horizontally */
+
 body {
   display: flex;
   flex-direction: column;
@@ -21,17 +21,16 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* Container that holds the board and controls, 
-   using column layout so buttons appear under the board */
+
 .game-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* center horizontally */
-  justify-content: center; /* center vertically if there's extra space */
-  min-height: 90vh; /* take up most of the viewport */
+  align-items: center; 
+  justify-content: center; 
+  min-height: 90vh; 
 }
 
-/* The board container with a background and padding */
+
 .board-container {
   background-color: #111;
   padding: 20px;
@@ -42,17 +41,15 @@ body {
   align-items: center; 
 }
 
-/* The actual game canvas */
+
 #gameCanvas {
   border: 1px solid #f5f2f2;
   background-color: #111;
-  /* Adjust these to your preference for size */
   width: 700px;
   height: 700px;
   margin-bottom: 10px;
 }
 
-/* Center the buttons below the board */
 .controls {
   margin-top: 10px;
   display: flex;
@@ -61,7 +58,6 @@ body {
   justify-content: center;
 }
 
-/* Simple button styling */
 button {
   padding: 10px 20px;
   font-size: 14px;
@@ -80,12 +76,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Hide the prediction container if you don't want it visible at all */
-.prediction-container {
-  display: none;
-}
 
-/* Keep the action log hidden by default. You can still toggle it if needed. */
 #actionLog {
   display: none;
   max-height: 200px;
@@ -109,12 +100,6 @@ button:disabled {
   margin: 5px 0;
 }
 
-/* Status message styling */
-#statusMessage {
-  margin-top: 10px;
-  color: #ff4444;
-  font-weight: bold;
-}
 
   </style>
 </head>

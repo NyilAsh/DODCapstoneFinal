@@ -971,18 +971,14 @@ let shotToggle = 0;
 canvas.addEventListener("click", function(e) {
   if (gameOver || autoPlayActive) return;
   
-  // Get the canvas's bounding rectangle (in CSS pixels)
   let rect = canvas.getBoundingClientRect();
-  // Compute the scaling factor between the canvas's intrinsic size and its displayed size.
+
   let scaleX = canvas.width / rect.width;
   let scaleY = canvas.height / rect.height;
   
-  // Calculate mouse coordinates in canvas coordinate space
   let x = (e.clientX - rect.left) * scaleX;
   let y = (e.clientY - rect.top) * scaleY;
   
-  // Subtract the same fixed offsets used in drawing
-  // (Adjust these if your new layout uses different margins)
   let offsetX = 25; 
   let offsetY = 20; 
   let col = Math.floor((x - offsetX) / CELL_SIZE);
