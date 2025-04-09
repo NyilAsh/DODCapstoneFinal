@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 from model import DenseCNN
 
-def predict_coordinates(p3x, p3y, p2x, p2y, p1x, p1y, 
+def predict_coordinates(p2x, p2y, p1x, p1y, cx, cy, 
                        model_path="models/saved_models/best_model.pth", 
                        top_k=2):
     """Predict coordinates from 6 input integers"""
@@ -13,7 +13,7 @@ def predict_coordinates(p3x, p3y, p2x, p2y, p1x, p1y,
     model.eval()
     
     # Create input tensor
-    input_tensor = create_input_tensor(p3x, p3y, p2x, p2y, p1x, p1y)
+    input_tensor = create_input_tensor(p2x, p2y, p1x, p1y, cx, cy)
     
     # Get predictions
     with torch.no_grad():
@@ -32,7 +32,7 @@ def predict_coordinates(p3x, p3y, p2x, p2y, p1x, p1y,
     
     return predictions
 
-def create_input_tensor(p3x, p3y, p2x, p2y, p1x, p1y):
+def create_input_tensor(p2x, p2y, p1x, p1y, cx, cy):
     """Create input tensor from 6 coordinate values"""
     def _create_image(x, y):
         img = torch.full((10, 10), -1.0)
@@ -41,15 +41,15 @@ def create_input_tensor(p3x, p3y, p2x, p2y, p1x, p1y):
         return img
     
     return torch.stack([
-        _create_image(p3x, p3y),  # p3 image
         _create_image(p2x, p2y),  # p2 image
-        _create_image(p1x, p1y)   # p1 image
+        _create_image(p1x, p1y),  # p1 image
+        _create_image(cx, cy)   # c image
     ])
 
 def main():
     # Example usage with 6 input coordinates
     predictions = predict_coordinates(
-        3,9,  # No p3 position
+        3,9,  # No p2 position
         3,7,
         4,6
     )
