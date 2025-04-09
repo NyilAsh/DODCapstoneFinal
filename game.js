@@ -971,11 +971,22 @@ let shotToggle = 0;
 canvas.addEventListener("click", function(e) {
   if (gameOver || autoPlayActive) return;
   
+  // Get the canvas's bounding rectangle (in CSS pixels)
   let rect = canvas.getBoundingClientRect();
-  let x = e.clientX - rect.left;
-  let y = e.clientY - rect.top;
-  let col = Math.floor((x - 25) / CELL_SIZE);
-  let row = GRID_SIZE - 1 - Math.floor((y - 20) / CELL_SIZE);
+  // Compute the scaling factor between the canvas's intrinsic size and its displayed size.
+  let scaleX = canvas.width / rect.width;
+  let scaleY = canvas.height / rect.height;
+  
+  // Calculate mouse coordinates in canvas coordinate space
+  let x = (e.clientX - rect.left) * scaleX;
+  let y = (e.clientY - rect.top) * scaleY;
+  
+  // Subtract the same fixed offsets used in drawing
+  // (Adjust these if your new layout uses different margins)
+  let offsetX = 25; 
+  let offsetY = 20; 
+  let col = Math.floor((x - offsetX) / CELL_SIZE);
+  let row = GRID_SIZE - 1 - Math.floor((y - offsetY) / CELL_SIZE);
   
   if (col < 0 || col >= GRID_SIZE || row < 0 || row >= GRID_SIZE) return;
   
@@ -988,14 +999,14 @@ canvas.addEventListener("click", function(e) {
   defenderShots[defender] = [[row, col]];
   defenderShotHistory[defender][0] = defenderShots[defender][0];
   actions.push(
-    "Defender " + defender + 
-    " selected shot at (" + col + "," + row + ")"
+    "Defender " + defender + " selected shot at (" + col + "," + row + ")"
   );
-  
   
   updateActionLog();
   drawBoardAndPaths();
 });
+
+
 document.getElementById('makePredictionsBtn').addEventListener('click', logHistoryToBoth);
 newGameBtn.addEventListener("click", newGame);
 nextTurnBtn.addEventListener("click", nextTurn);
