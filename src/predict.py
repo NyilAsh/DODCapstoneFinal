@@ -1,14 +1,14 @@
 import torch
 import torch.nn.functional as F
-from model import DenseCNN
+from src.model import DenseCNN
 
-def predict_coordinates(p3x, p3y, p2x, p2y, p1x, p1y, 
+def predict_coordinates(p2x, p2y, p1x, p1y, cx, cy, 
                        model_path="models/saved_models/best_model.pth"):
     model = DenseCNN()
     model.load_state_dict(torch.load(model_path))
     model.eval()
     
-    input_tensor = create_input_tensor(p3x, p3y, p2x, p2y, p1x, p1y)
+    input_tensor = create_input_tensor(p2x, p2y, p1x, p1y, cx, cy)
     
     with torch.no_grad():
         outputs = model(input_tensor.unsqueeze(0))
@@ -26,16 +26,16 @@ def predict_coordinates(p3x, p3y, p2x, p2y, p1x, p1y,
     return (pred1x, pred1y, pred1_conf,
             pred2x, pred2y, pred2_conf)
 
-def create_input_tensor(p3x, p3y, p2x, p2y, p1x, p1y):
+def create_input_tensor(p2x, p2y, p1x, p1y, cx, cy):
     def _create_image(x, y):
         img = torch.full((10, 10), -1.0)
         if x >=0 and y >=0:
             img[y, x] = 1.0
         return img
     return torch.stack([
-        _create_image(p3x, p3y),
         _create_image(p2x, p2y),
-        _create_image(p1x, p1y)
+        _create_image(p1x, p1y),
+        _create_image(cx, cy)
     ])
 
 def main():
