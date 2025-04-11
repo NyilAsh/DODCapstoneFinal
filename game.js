@@ -3,13 +3,56 @@ let attackerImg = new Image();
 let redSquareImg = new Image();
 let blueSquareImg = new Image();
 
-const LOGGER_SERVER = 'http://localhost:5000/log';
+const LOGGER_SERVER = 'http://localhost:5001';
 let isLoggerConnected = false;
+
+const GRID_SIZE = 10;
+const CELL_SIZE = 80;
+// Prediction colors for each attacker
+const PREDICTION_COLORS = {
+  A: {
+    primary: 'rgba(139, 0, 0, 0.5)',    // Dark red
+    secondary: 'rgba(255, 102, 102, 0.3)'  // Light red
+  },
+  B: {
+    primary: 'rgba(34, 89, 34, 0.5)',     // Forest green
+    secondary: 'rgba(135, 162, 127, 0.3)'  // Sage green
+  },
+  C: {
+    primary: 'rgba(0, 0, 139, 0.5)',     // Dark blue
+    secondary: 'rgba(100, 149, 237, 0.3)'  // Light blue
+  }
+};
+let board = [];
+let attackers = [];
+let trainingData = [];
+let hoveredCell = null;
+let gameOver = false;
+let actions = [];
+let showPaths = false;
+let autoPlayActive = false;
+let autoPlayInterval = null;
+const TURN_DELAY_MS = 100;
+let attackerHistory = {};
+
+let defenderShotHistory = {
+  A: [
+    [-1, -1],
+    [-1, -1],
+    [-1, -1],
+    [-1, -1],
+  ],
+  B: [
+    [-1, -1],
+    [-1, -1],
+    [-1, -1],
+    [-1, -1],
+  ],
+};
 
 function loadGameImages() {
     console.log("Loading game images...");
     
-    // Create a promise for each image load
     const defenderPromise = new Promise((resolve, reject) => {
         defenderImg.onload = () => {
             console.log("Defender image loaded successfully");
@@ -73,38 +116,10 @@ const actionLogBtn = document.getElementById("actionLogBtn");
 const togglePathsBtn = document.getElementById("togglePathsBtn");
 const statusMessage = document.getElementById("statusMessage");
 const actionLog = document.getElementById("actionLog");
-// Removed autoSelectBtn variable
 const autoPlayBtn = document.getElementById("autoPlayBtn");
 const generatePredictionsBtn = document.getElementById("generatePredictionsBtn");
-
-const GRID_SIZE = 10;
-const CELL_SIZE = 80;
-let board = [];
-let attackers = [];
-let trainingData = [];
-let hoveredCell = null;
-let gameOver = false;
-let actions = [];
-let showPaths = false;
-let autoPlayActive = false;
-let autoPlayInterval = null;
-const TURN_DELAY_MS = 100;
-let attackerHistory = {};
-
-let defenderShotHistory = {
-  A: [
-    [-1, -1],
-    [-1, -1],
-    [-1, -1],
-    [-1, -1],
-  ],
-  B: [
-    [-1, -1],
-    [-1, -1],
-    [-1, -1],
-    [-1, -1],
-  ],
-};
+const togglePredictionOutputBtn = document.getElementById("togglePredictionOutputBtn");
+const predictionOutput = document.getElementById("prediction-output");
 
 function toggleAutoPlay() {
   if (autoPlayInterval) {
@@ -121,7 +136,6 @@ function startAutoPlay() {
   
   newGameBtn.disabled = true;
   nextTurnBtn.disabled = true;
-  // Removed autoSelectBtn disabling
   
   autoPlayInterval = setInterval(() => {
     if (gameOver) {
@@ -139,7 +153,6 @@ function stopAutoPlay() {
   
   newGameBtn.disabled = false;
   nextTurnBtn.disabled = false;
-  // Removed autoSelectBtn enabling
   
   if (autoPlayInterval) {
     clearInterval(autoPlayInterval);
@@ -425,6 +438,7 @@ function drawBoard(boardArr) {
   ctx.strokeStyle = "#444";
   ctx.textAlign = "center";
   
+  // Draw grid numbers
   for (let c = 0; c < GRID_SIZE; c++) {
     ctx.fillText(c.toString(), c * CELL_SIZE + 25 + CELL_SIZE / 2, 15);
   }
@@ -438,6 +452,7 @@ function drawBoard(boardArr) {
     );
   }
   
+  // Draw grid
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       ctx.strokeStyle = "#444";
@@ -448,6 +463,7 @@ function drawBoard(boardArr) {
         CELL_SIZE
       );
       
+      // Draw defenders
       if (typeof boardArr[GRID_SIZE - 1 - r][c] === "string") {
         try {
           ctx.drawImage(
@@ -472,7 +488,54 @@ function drawBoard(boardArr) {
       }
     }
   }
+
+  // Draw AI predictions if available
+  if (window.predictions) {
+    for (const prediction of window.predictions) {
+      const attackerId = prediction.attackerId;
+      const primaryPred = prediction.primary;
+      const secondaryPred = prediction.secondary;
+
+      // Draw primary prediction with attacker-specific color
+      ctx.fillStyle = PREDICTION_COLORS[attackerId].primary.replace('{opacity}', primaryPred.confidence);
+      ctx.fillRect(
+        primaryPred.x * CELL_SIZE + 25,
+        (GRID_SIZE - 1 - primaryPred.y) * CELL_SIZE + 20,
+        CELL_SIZE,
+        CELL_SIZE
+      );
+      
+      // Draw secondary prediction with attacker-specific color
+      ctx.fillStyle = PREDICTION_COLORS[attackerId].secondary.replace('{opacity}', secondaryPred.confidence);
+      ctx.fillRect(
+        secondaryPred.x * CELL_SIZE + 25,
+        (GRID_SIZE - 1 - secondaryPred.y) * CELL_SIZE + 20,
+        CELL_SIZE,
+        CELL_SIZE
+      );
+
+      // Add prediction labels
+      ctx.fillStyle = "#fff";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+      
+      // Primary prediction label with exact percentage
+      ctx.fillText(
+        `${(primaryPred.confidence * 100).toFixed(1)}%`,
+        primaryPred.x * CELL_SIZE + 25 + CELL_SIZE/2,
+        (GRID_SIZE - 1 - primaryPred.y) * CELL_SIZE + 20 + CELL_SIZE/2
+      );
+      
+      // Secondary prediction label with exact percentage
+      ctx.fillText(
+        `${(secondaryPred.confidence * 100).toFixed(1)}%`,
+        secondaryPred.x * CELL_SIZE + 25 + CELL_SIZE/2,
+        (GRID_SIZE - 1 - secondaryPred.y) * CELL_SIZE + 20 + CELL_SIZE/2
+      );
+    }
+  }
   
+  // Draw defender shots
   if (defenderShots["A"].length + defenderShots["B"].length > 0) {
     for (let defender in defenderShots) {
       defenderShots[defender].forEach(shot => {
@@ -566,6 +629,12 @@ function drawBoardAndPaths() {
 }
 
 function newGame() {
+  // Clear predictions
+  window.predictions = null;
+  const predictionOutput = document.getElementById('prediction-output');
+  predictionOutput.style.display = 'none';
+  predictionOutput.textContent = '';
+  
   actions = [];
   actionLog.innerHTML = "";
   
@@ -573,7 +642,6 @@ function newGame() {
   statusMessage.textContent = "";
   nextTurnBtn.disabled = false;
   newGameBtn.disabled = false;
-  // Removed autoSelectBtn enabling
   showPaths = false;
   shotToggle = 0;
   board = createEmptyBoard();
@@ -602,11 +670,6 @@ function newGame() {
   
   trainingData.push(JSON.parse(JSON.stringify(board)));
   drawBoardAndPaths();
-
-  const predictionContainer = document.getElementById('prediction-container');
-  if (predictionContainer) {
-    predictionContainer.style.display = 'none';
-  }
 }
 
 function endGame(reason) {
@@ -694,32 +757,115 @@ function isValidShotPosition(row, col) {
   );
 }
 
-function logAttackerData() {
-  const logData = [];
+function updatePredictions(serverResponse) {
+  window.predictions = [];
   
-  ['A', 'B', 'C'].forEach(id => {
-    const history = attackerHistory[id] || [[-1, -1], [-1, -1], [-1, -1], [-1, -1]];
-    // Skip if current position is invalid
-    if (history[0][0] === -1 && history[0][1] === -1) return;
+  // Parse each attacker's predictions
+  for (const prediction of serverResponse) {
+    const attackerId = prediction.attackerID;
+    const [pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf] = prediction.predictions;
     
-    const positions = [];
-    // Collect positions from oldest (T-3) to current
-    for (let i = history.length - 1; i >= 0; i--) {
-      positions.push(history[i][1], history[i][0]); // col, row
+    window.predictions.push({
+      attackerId,
+      primary: {
+        x: pred1x,
+        y: pred1y,
+        confidence: pred1conf
+      },
+      secondary: {
+        x: pred2x,
+        y: pred2y,
+        confidence: pred2conf
+      }
+    });
+  }
+  
+  // Redraw the board to show predictions
+  drawBoardAndPaths();
+}
+
+function logAttackerData() {
+  // Update prediction output box without changing its visibility
+  predictionOutput.textContent = '\nReceived prediction request:\n';
+
+  // Prepare and send logger data
+  const logData = [];
+  ['A', 'B', 'C'].forEach(id => {
+    const history = attackerHistory[id];
+    if (history[0][0] !== -1) { // Only alive attackers
+      const positions = [];
+      // Format: Oldest -> Newest as [T-3, T-2, T-1, Current]
+      for (let i = history.length - 1; i >= 0; i--) {
+        positions.push(history[i][1], history[i][0]); // col, row
+      }
+      logData.push({ attackerID: id, positions });
     }
-    logData.push(positions);
   });
 
-  if (logData.length > 0) {
-    fetch(LOGGER_SERVER, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(logData)
-    }).catch(() => isLoggerConnected = false);
-  }
+  fetch(LOGGER_SERVER, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(logData)
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Network response was not ok');
+    return res.json();
+  })
+  .then(predictions => {
+    console.log("Received predictions:", predictions);
+    
+    // Clear existing predictions
+    window.predictions = [];
+    
+    // Process each prediction
+    predictions.forEach(pred => {
+      const [pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf] = pred.predictions;
+      
+      // Add to window.predictions
+      window.predictions.push({
+        attackerId: pred.attackerID,
+        primary: {
+          x: pred1x,
+          y: pred1y,
+          confidence: pred1conf
+        },
+        secondary: {
+          x: pred2x,
+          y: pred2y,
+          confidence: pred2conf
+        }
+      });
+
+      // Update prediction output text
+      predictionOutput.textContent += `\nAttacker ${pred.attackerID} prediction:\n`;
+      const attackerData = logData.find(d => d.attackerID === pred.attackerID);
+      predictionOutput.textContent += `T-2 Position: (${attackerData.positions[2]}, ${attackerData.positions[3]})\n`;
+      predictionOutput.textContent += `T-1 Position: (${attackerData.positions[4]}, ${attackerData.positions[5]})\n`;
+      predictionOutput.textContent += `Current Position: (${attackerData.positions[6]}, ${attackerData.positions[7]})\n`;
+      predictionOutput.textContent += `Primary prediction: (${pred1x}, ${pred1y}) ${(pred1conf*100).toFixed(1)}%\n`;
+      predictionOutput.textContent += `Secondary prediction: (${pred2x}, ${pred2y}) ${(pred2conf*100).toFixed(1)}%\n`;
+    });
+    
+    predictionOutput.textContent += '';
+    
+    isLoggerConnected = true;
+    // Force a redraw to show all predictions
+    drawBoardAndPaths();
+  })
+  .catch(error => {
+    console.error("Error getting predictions:", error);
+    isLoggerConnected = false;
+    window.predictions = null;
+    predictionOutput.textContent += '\nError getting predictions\n';
+    drawBoardAndPaths();
+  });
 }
+
 function nextTurn() {
   if (gameOver) return;
+  
+  // Clear predictions when moving to next turn
+  window.predictions = null;
   
   // 1. Save PRE-move state for history
   const preMoveState = {
@@ -796,7 +942,6 @@ function nextTurn() {
   defenderShots = { A: [], B: [] }; // Reset shots
   updateAttackerHistory();
   updateDefenderShotHistory();
-  logAttackerData();
   
   drawBoardAndPaths();
 
@@ -862,64 +1007,6 @@ function updateDefenderShotHistory() {
   });
 }
 
-function logHistoryToBoth() {
-  // Format the output for display
-  const formattedOutput = 
-    `=== Attackers Information ===\n` +
-    `A: [${attackerHistory['A'][3][1]},${attackerHistory['A'][3][0]},` +
-    `${attackerHistory['A'][2][1]},${attackerHistory['A'][2][0]},` +
-    `${attackerHistory['A'][1][1]},${attackerHistory['A'][1][0]},` +
-    `${attackerHistory['A'][0][1]},${attackerHistory['A'][0][0]}]\n` +
-    `B: [${attackerHistory['B'][3][1]},${attackerHistory['B'][3][0]},` +
-    `${attackerHistory['B'][2][1]},${attackerHistory['B'][2][0]},` +
-    `${attackerHistory['B'][1][1]},${attackerHistory['B'][1][0]},` +
-    `${attackerHistory['B'][0][1]},${attackerHistory['B'][0][0]}]\n` +
-    `C: [${attackerHistory['C'][3][1]},${attackerHistory['C'][3][0]},` +
-    `${attackerHistory['C'][2][1]},${attackerHistory['C'][2][0]},` +
-    `${attackerHistory['C'][1][1]},${attackerHistory['C'][1][0]},` +
-    `${attackerHistory['C'][0][1]},${attackerHistory['C'][0][0]}]`;
-
-  // document.getElementById('prediction-output').textContent = formattedOutput;
-  // document.getElementById('prediction-container').style.display = 'block';
-
-  // Prepare and send logger data
-  const logData = [];
-  ['A', 'B', 'C'].forEach(id => {
-    const history = attackerHistory[id];
-    if (history[0][0] !== -1) { // Only alive attackers
-      const positions = [];
-      // Format: Oldest -> Newest as [T-3, T-2, T-1, Current]
-      for (let i = history.length - 1; i >= 0; i--) {
-        positions.push(history[i][1], history[i][0]); // col, row
-      }
-      logData.push({ attackerID: id, positions });
-    }
-  });
-
-  fetch(LOGGER_SERVER, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(logData)
-  })
-  .then(res => isLoggerConnected = res.ok)
-  .catch(() => isLoggerConnected = false);
-
-
-  fetch('http://localhost:5001', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(logData)
-  })
-  .then(response => {
-    console.log("Data successfully sent to server.py:", response);
-  })
-  .catch(error => {
-    console.error("Error sending data to server.py:", error);
-  });
-
-
-
-}
 function createSeparator(character) {
   const separator = document.createElement('hr');
   separator.style.border = 'none';
@@ -1003,7 +1090,7 @@ canvas.addEventListener("click", function(e) {
 });
 
 
-document.getElementById('makePredictionsBtn').addEventListener('click', logHistoryToBoth);
+document.getElementById('makePredictionsBtn').addEventListener('click', logAttackerData);
 newGameBtn.addEventListener("click", newGame);
 nextTurnBtn.addEventListener("click", nextTurn);
 actionLogBtn.addEventListener("click", function () {
@@ -1013,6 +1100,9 @@ actionLogBtn.addEventListener("click", function () {
 togglePathsBtn.addEventListener("click", function () {
   showPaths = !showPaths;
   drawBoardAndPaths();
+});
+togglePredictionOutputBtn.addEventListener("click", function() {
+  predictionOutput.style.display = predictionOutput.style.display === "none" ? "block" : "none";
 });
 autoPlayBtn.addEventListener("click", toggleAutoPlay);
 

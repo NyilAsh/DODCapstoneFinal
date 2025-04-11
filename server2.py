@@ -18,43 +18,52 @@ class MyHandler(BaseHTTPRequestHandler):
             print("\n" + "="*40)
             print("Received prediction request:")
             
+            predictions = []
             # Process each attacker's data
             for attacker_data in data:
                 attacker_id = attacker_data['attackerID']
                 positions = attacker_data['positions']
                 
-                # Extract positions directly without validation
-                # Format: [T-3.col, T-3.row, T-2.col, T-2.row, T-1.col, T-1.row, T.col, T.row]
-                t2_col, t2_row = positions[2], positions[3]
-                t1_col, t1_row = positions[4], positions[5]
-                current_col, current_row = positions[6], positions[7]
+                # Extract positions from the array
+                t3x, t3y, t2x, t2y, t1x, t1y, cx, cy = positions
                 
                 # Get predictions
-                try:
-                    pred = predict_coordinates(
-                        p2x=t2_col, p2y=t2_row,
-                        p1x=t1_col, p1y=t1_row,
-                        cx=current_col, cy=current_row
-                    )
-                    print(f"\nAttacker {attacker_id} prediction:")
-                    print(f"T-2 Position: ({t2_col}, {t2_row})")
-                    print(f"T-1 Position: ({t1_col}, {t1_row})")
-                    print(f"Current Position: ({current_col}, {current_row})")
-                    print(f"Primary prediction: ({pred[0]}, {pred[1]}) {pred[2]*100:.1f}%")
-                    print(f"Secondary prediction: ({pred[3]}, {pred[4]}) {pred[5]*100:.1f}%")
-                except Exception as e:
-                    print(f"Prediction failed for {attacker_id}: {str(e)}")
+                pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf = predict_coordinates(
+                    t2x, t2y,  # T-2 position
+                    t1x, t1y,  # T-1 position
+                    cx, cy     # Current position
+                )
+                
+                # Print predictions to terminal
+                print(f"\nAttacker {attacker_id} prediction:")
+                print(f"T-2 Position: ({t2x}, {t2y})")
+                print(f"T-1 Position: ({t1x}, {t1y})")
+                print(f"Current Position: ({cx}, {cy})")
+                print(f"Primary prediction: ({pred1x}, {pred1y}) {pred1conf*100:.1f}%")
+                print(f"Secondary prediction: ({pred2x}, {pred2y}) {pred2conf*100:.1f}%")
+                
+                # Add predictions to response
+                predictions.append({
+                    'attackerID': attacker_id,
+                    'predictions': [pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf]
+                })
             
             print("="*40 + "\n")
-                    
-        except json.JSONDecodeError:
-            print("Error decoding JSON payload")
-
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(json.dumps({"status": "success"}).encode())
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(predictions).encode())
+            
+        except Exception as e:
+            print(f"Error processing request: {e}")
+            self.send_response(500)
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(str(e).encode())
 
     def log_message(self, format, *args):
         return  # Disable request logging
@@ -62,9 +71,8 @@ class MyHandler(BaseHTTPRequestHandler):
 def run(server_class=HTTPServer, handler_class=MyHandler, port=5001):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print(f"Prediction server running on port {port}...")
+    print(f'Starting prediction server on port {port}...')
     httpd.serve_forever()
 
 if __name__ == '__main__':
-    run()
     run()
