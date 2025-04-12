@@ -597,30 +597,58 @@ function drawPaths() {
 }
 
 function drawAttackers() {
+  // Group attackers by their current tile
+  const tileGroups = {};
   for (let atk of attackers) {
     let [r, c] = atk.steppedPath[atk.currentIndex];
-    try {
-      ctx.drawImage(
-        attackerImg,
-        c * CELL_SIZE + 30,
-        (GRID_SIZE - 1 - r) * CELL_SIZE + 25,
-        CELL_SIZE - 10,
-        CELL_SIZE - 10
-      );
+    const key = `${r},${c}`;
+    if (!tileGroups[key]) {
+      tileGroups[key] = [];
+    }
+    tileGroups[key].push(atk);
+  }
+
+  // Iterate over each group and draw attackers with incremental offsets
+  for (let key in tileGroups) {
+    // Extract the row and column from the key
+    const [r, c] = key.split(",").map(Number);
+    // Set base drawing coordinates for the tile
+    const baseX = c * CELL_SIZE + 30;
+    const baseY = (GRID_SIZE - 1 - r) * CELL_SIZE + 25;
+    const group = tileGroups[key];
+
+    // Draw each attacker in the group, offsetting subsequent attackers by 5 pixels
+    for (let i = 0; i < group.length; i++) {
+      const atk = group[i];
+      const offsetX = i * 5; // Fixed horizontal offset for staggered display
+      const offsetY = i * 5; // Fixed vertical offset for staggered display
       
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 16px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        atk.id,
-        c * CELL_SIZE + 25 + CELL_SIZE/2,
-        (GRID_SIZE - 1 - r) * CELL_SIZE + 20 + CELL_SIZE/2 + 5
-      );
-    } catch (e) {
-      console.error("Error drawing attacker:", e);
+      try {
+        // Draw the attacker image with the calculated offset
+        ctx.drawImage(
+          attackerImg,
+          baseX + offsetX,
+          baseY + offsetY,
+          CELL_SIZE - 10,
+          CELL_SIZE - 10
+        );
+
+        // Draw the attacker ID text at the center of the image with the same offset
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          atk.id,
+          c * CELL_SIZE + 25 + CELL_SIZE / 2 + offsetX,
+          (GRID_SIZE - 1 - r) * CELL_SIZE + 20 + CELL_SIZE / 2 + 5 + offsetY
+        );
+      } catch (e) {
+        console.error("Error drawing attacker:", e);
+      }
     }
   }
 }
+
 
 function drawBoardAndPaths() {
   drawBoard(board);
