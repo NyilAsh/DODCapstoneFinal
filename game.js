@@ -1118,6 +1118,19 @@ canvas.addEventListener("click", function(e) {
 });
 
 
+const toggleLegendBtn = document.getElementById("toggleLegendBtn");
+const mapLegend = document.getElementById("mapLegend");
+
+toggleLegendBtn.addEventListener("click", function() {
+  // Toggle the display style of the legend element
+  if (mapLegend.style.display === "none") {
+    mapLegend.style.display = "block";
+  } else {
+    mapLegend.style.display = "none";
+  }
+});
+
+
 document.getElementById('makePredictionsBtn').addEventListener('click', logAttackerData);
 newGameBtn.addEventListener("click", newGame);
 nextTurnBtn.addEventListener("click", nextTurn);

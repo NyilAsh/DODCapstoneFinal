@@ -29,6 +29,7 @@
     }
 
     .board-container {
+      position: relative; /* Enable absolute positioning of the legend */
       background-color: black;
       padding: 10px;
       border-radius: 10px;
@@ -41,9 +42,19 @@
     #gameCanvas {
       border: 1px solid #f5f2f2;
       background-color: #111;
-      margin-top: 20px;
-      margin-left: 10px;
-      margin-right: 10px;
+      margin: 20px 10px;
+    }
+
+    /* Styling for the legend */
+    #mapLegend {
+      position: absolute;
+      top: 50px;
+      left: 130px;
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      border: 1px solid #555;
+      border-radius: 5px;
+      color: #fff;
     }
 
     .controls {
@@ -117,6 +128,50 @@
 </head>
 <body>
   <div class="game-container">
+    
+          <!-- Map legend element positioned at the top-left -->
+          <div id="mapLegend">
+            <strong>Map Legend</strong>
+            <ul style="padding-left: 15px; margin: 5px 0;">
+              <li>
+                <img src="Defender.png" width="20" height="20" alt="Defender Icon"> Defender (A,B)
+              </li>
+              <li>
+                <img src="Attacker.png" width="20" height="20" alt="Attacker Icon"> Attacker (A,B,C)
+              </li>
+              <li>Red Square: Defender shot by A</li>
+              <li>Blue Square: Defender shot by B</li>
+              <li>
+                Prediction Movements:
+                <ul style="padding-left: 15px; margin: 5px 0;">
+                  <li>
+                    Attacker A:
+                    <ul style="padding-left: 15px;">
+                      <li>Dark red: Most likely</li>
+                      <li>Light red: Second likely</li>
+                    </ul>
+                  </li>
+                  <li>
+                    Attacker B:
+                    <ul style="padding-left: 15px;">
+                      <li>Dark green: Most likely</li>
+                      <li>Light green: Second likely</li>
+                    </ul>
+                  </li>
+                  <li>
+                    Attacker C:
+                    <ul style="padding-left: 15px;">
+                      <li>Dark blue: Most likely</li>
+                      <li>Light blue: Second likely</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+              
+              
+            </ul>
+          </div>
+
     <div class="board-container">
       <canvas id="gameCanvas" width="850" height="850"></canvas>
       <div class="controls">
@@ -127,6 +182,7 @@
         <button id="togglePredictionOutputBtn">AI Output</button>
         <button id="actionLogBtn">Toggle Action Log</button>
         <button id="autoPlayBtn">Auto Play</button>
+        <button id="toggleLegendBtn">Toggle Legend</button>
       </div>
       <div id="statusMessage"></div>
       <ul id="actionLog"></ul>
