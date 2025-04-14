@@ -540,7 +540,7 @@ function drawBoard(boardArr) {
     for (let defender in defenderShots) {
       defenderShots[defender].forEach(shot => {
         let [r, c] = shot;
-        ctx.fillStyle = defender === "A" ? "rgba(255,0,0,0.3)" : "rgba(0,0,255,0.3)";
+        ctx.fillStyle = "rgba(172, 18, 172, 0.3)";
         ctx.fillRect(
           c * CELL_SIZE + 25,
           (GRID_SIZE - 1 - r) * CELL_SIZE + 20,
@@ -1219,7 +1219,7 @@ function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots
     Object.entries(defenderShots).forEach(([defender, shots]) => {
         shots.forEach(shot => {
             const [r, c] = shot;
-            ctx.fillStyle = defender === "A" ? "rgba(255,0,0,0.3)" : "rgba(0,0,255,0.3)";
+            ctx.fillStyle = "rgba(172, 18, 172, 0.3)";
             ctx.fillRect(
                 c * PRED_CELL_SIZE + 25,
                 (GRID_SIZE - 1 - r) * PRED_CELL_SIZE + 20,
