@@ -28,20 +28,11 @@
       min-height: 90vh;
     }
 
-    .board-container {
-      position: relative; /* Enable absolute positioning of the legend */
-      background-color: black;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+
 
     #gameCanvas {
       border: 1px solid #f5f2f2;
-      background-color: #111;
+      background-color: #060505;
       margin: 20px 10px;
     }
 
@@ -139,8 +130,8 @@
               <li>
                 <img src="Attacker.png" width="20" height="20" alt="Attacker Icon"> Attacker (A,B,C)
               </li>
-              <li>Red Square: Defender shot by A</li>
-              <li>Blue Square: Defender shot by B</li>
+              <li>Purple Square (A): Tile shot by A</li>
+              <li>Purple Square (B): Tile shot by B</li>
               <li>
                 Prediction Movements:
                 <ul style="padding-left: 15px; margin: 5px 0;">
@@ -178,10 +169,10 @@
         <button id="newGameBtn">New Game</button>
         <button id="nextTurnBtn">Next Turn</button>
         <button id="togglePathsBtn">Toggle Paths</button>
-        <button id="makePredictionsBtn">Predict AI Movement</button>
+        <button id="makePredictionsBtn">Predict Attacker Movement</button>
         <button id="togglePredictionOutputBtn">AI Output</button>
         <button id="actionLogBtn">Toggle Action Log</button>
-        <button id="autoPlayBtn">Auto Play</button>
+        <!-- <button id="autoPlayBtn">Auto Play</button> -->
         <button id="toggleLegendBtn">Toggle Legend</button>
       </div>
       <div id="statusMessage"></div>

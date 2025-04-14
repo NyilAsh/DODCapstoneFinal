@@ -1,9 +1,9 @@
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from src.predict import predict_coordinates  # Import the prediction function
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
-        # Respond to preflight requests with CORS headers.
         self.send_response(200, "ok")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -11,31 +11,67 @@ class MyHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        # Read the content length and then the posted data
         content_length = int(self.headers.get('Content-Length', 0))
         post_data = self.rfile.read(content_length)
         try:
-            # Try to decode the JSON payload
             data = json.loads(post_data)
-            print("Received data from client:", data)
-        except json.JSONDecodeError:
-            print("Error decoding JSON payload.")
-        # Send a response back
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        response = {"status": "success"}
-        self.wfile.write(json.dumps(response).encode())
+            print("\n" + "="*40)
+            print("Received prediction request:")
+            
+            predictions = []
+            # Process each attacker's data
+            for attacker_data in data:
+                attacker_id = attacker_data['attackerID']
+                positions = attacker_data['positions']
+                
+                # Extract positions from the array
+                t3x, t3y, t2x, t2y, t1x, t1y, cx, cy = positions
+                
+                # Get predictions
+                pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf = predict_coordinates(
+                    t2x, t2y,  # T-2 position
+                    t1x, t1y,  # T-1 position
+                    cx, cy     # Current position
+                )
+                
+                # Print predictions to terminal
+                print(f"\nAttacker {attacker_id} prediction:")
+                print(f"T-2 Position: ({t2x}, {t2y})")
+                print(f"T-1 Position: ({t1x}, {t1y})")
+                print(f"Current Position: ({cx}, {cy})")
+                print(f"Primary prediction: ({pred1x}, {pred1y}) {pred1conf*100:.1f}%")
+                print(f"Secondary prediction: ({pred2x}, {pred2y}) {pred2conf*100:.1f}%")
+                
+                # Add predictions to response
+                predictions.append({
+                    'attackerID': attacker_id,
+                    'predictions': [pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf]
+                })
+            
+            print("="*40 + "\n")
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(predictions).encode())
+            
+        except Exception as e:
+            print(f"Error processing request: {e}")
+            self.send_response(500)
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(str(e).encode())
 
     def log_message(self, format, *args):
-        # Override to suppress logging of every request.
-        return
+        return  # Disable request logging
 
 def run(server_class=HTTPServer, handler_class=MyHandler, port=5001):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print(f"Extra processing server running on port {port}...")
+    print(f'Starting prediction server on port {port}...')
     httpd.serve_forever()
 
 if __name__ == '__main__':
