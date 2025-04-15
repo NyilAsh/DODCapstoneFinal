@@ -1,28 +1,34 @@
+// Declare images for defenders, attackers, and shot indicators
 let defenderImg = new Image();
 let attackerImg = new Image();
 let redSquareImg = new Image();
 let blueSquareImg = new Image();
 
+// Server URL for logging/predictions and connection flag
 const LOGGER_SERVER = 'http://localhost:5001';
 let isLoggerConnected = false;
 
+// Constants for game grid and cell sizing
 const GRID_SIZE = 10;
 const CELL_SIZE = 80;
-// Prediction colors for each attacker
+
+// Prediction colors for each attacker (A, B, and C) with primary and secondary opacities
 const PREDICTION_COLORS = {
   A: {
-    primary: 'rgba(139, 0, 0, 0.5)',    // Dark red
-    secondary: 'rgba(255, 102, 102, 0.3)'  // Light red
+    primary: 'rgba(139, 0, 0, 0.5)',    // Dark red for primary prediction
+    secondary: 'rgba(255, 102, 102, 0.3)'  // Light red for secondary prediction
   },
   B: {
-    primary: 'rgba(34, 89, 34, 0.5)',     // Forest green
-    secondary: 'rgba(135, 162, 127, 0.3)'  // Sage green
+    primary: 'rgba(34, 89, 34, 0.5)',     // Forest green for primary prediction
+    secondary: 'rgba(135, 162, 127, 0.3)'  // Sage green for secondary prediction
   },
   C: {
-    primary: 'rgba(0, 0, 139, 0.5)',     // Dark blue
-    secondary: 'rgba(100, 149, 237, 0.3)'  // Light blue
+    primary: 'rgba(0, 0, 139, 0.5)',     // Dark blue for primary prediction
+    secondary: 'rgba(100, 149, 237, 0.3)'  // Light blue for secondary prediction
   }
 };
+
+// Global game state variables
 let board = [];
 let attackers = [];
 let trainingData = [];
@@ -35,6 +41,7 @@ let autoPlayInterval = null;
 const TURN_DELAY_MS = 100;
 let attackerHistory = {};
 
+// Maintain shot history for defenders A and B
 let defenderShotHistory = {
   A: [
     [-1, -1],
@@ -50,9 +57,11 @@ let defenderShotHistory = {
   ],
 };
 
+// Function to load game images and ensure they're available before starting the game
 function loadGameImages() {
     console.log("Loading game images...");
     
+    // Create promises for image loading
     const defenderPromise = new Promise((resolve, reject) => {
         defenderImg.onload = () => {
             console.log("Defender image loaded successfully");
@@ -75,29 +84,33 @@ function loadGameImages() {
         };
     });
 
+    // Load the red square image (for shot visualization) with logging
     redSquareImg.onload = function() {
         console.log("Red square image loaded successfully");
     };
     
-    blueSquareImg.onload = function() {
-        console.log("Blue square image loaded successfully");
-    };
-
     redSquareImg.onerror = function() {
         console.error("Error loading red square image");
+    };
+
+    // Load the blue square image with logging
+    blueSquareImg.onload = function() {
+        console.log("Blue square image loaded successfully");
     };
     
     blueSquareImg.onerror = function() {
         console.error("Error loading blue square image");
     };
 
+    // Set source paths for defender and attacker images
     defenderImg.src = "Defender.png";
     attackerImg.src = "Attacker.png";
 
+    // Return promise that resolves when both defender and attacker images are loaded
     return Promise.all([defenderPromise, attackerPromise]);
 }
 
-// Call loadGameImages when window loads
+// Start the game once the window has loaded images
 window.onload = function() {
     loadGameImages().then(() => {
         console.log("All images loaded, starting game");
@@ -108,6 +121,7 @@ window.onload = function() {
     });
 };
 
+// Get references to canvas and game control elements in the HTML document
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const newGameBtn = document.getElementById("newGameBtn");
@@ -121,6 +135,7 @@ const generatePredictionsBtn = document.getElementById("generatePredictionsBtn")
 const togglePredictionOutputBtn = document.getElementById("togglePredictionOutputBtn");
 const predictionOutput = document.getElementById("prediction-output");
 
+// Toggle Auto Play functionality: Start or stop automatic turns
 function toggleAutoPlay() {
   if (autoPlayInterval) {
     stopAutoPlay();
@@ -129,6 +144,7 @@ function toggleAutoPlay() {
   }
 }
 
+// Start automatic turns (auto-play mode)
 function startAutoPlay() {
   autoPlayActive = true;
   autoPlayBtn.textContent = 'Stop Auto Play';
@@ -139,13 +155,14 @@ function startAutoPlay() {
   
   autoPlayInterval = setInterval(() => {
     if (gameOver) {
-      newGame(); // Start a new game automatically if current game is over
+      newGame(); // Automatically start a new game if the current one is over
     } else {
-      nextTurn();
+      nextTurn(); // Process the next turn
     }
   }, TURN_DELAY_MS);
 }
 
+// Stop automatic turns (auto-play mode)
 function stopAutoPlay() {
   autoPlayActive = false;
   autoPlayBtn.textContent = 'Auto Play';
@@ -160,6 +177,7 @@ function stopAutoPlay() {
   }
 }
 
+// Create and return an empty board (2D array) with GRID_SIZE rows and columns
 function createEmptyBoard() {
   let arr = [];
   for (let r = 0; r < GRID_SIZE; r++) {
@@ -171,6 +189,7 @@ function createEmptyBoard() {
   return arr;
 }
 
+// Place defenders on the board randomly on the first row
 function placeDefenders(boardArr) {
   let pos1 = Math.floor(Math.random() * 10);
   let pos2 = Math.floor(Math.random() * 10);
@@ -179,6 +198,7 @@ function placeDefenders(boardArr) {
     pos2 = Math.floor(Math.random() * 10);
   }
   
+   // Assign defender labels based on positions
   const Apos = Math.min(pos1, pos2);
   const Bpos = Math.max(pos1, pos2);
   
@@ -186,7 +206,7 @@ function placeDefenders(boardArr) {
   boardArr[0][Bpos] = "B";
 }
 
-
+// Generate a straight path using Bresenham's algorithm from one point to another
 function straightPath(r0, c0, r1, c1) {
   let path = [[r0, c0]];
   let currentR = r0;
@@ -232,6 +252,8 @@ function straightPath(r0, c0, r1, c1) {
   
   return path;
 }
+
+// Generate a random (curve) path between two points by shuffling vertical and horizontal moves
 function RandomPath(r0, c0, r1, c1) {
   let dr = r1 - r0;
   let dc = c1 - c0;
@@ -292,6 +314,7 @@ function RandomPath(r0, c0, r1, c1) {
   return path;
 }
 
+// Finds the nearest defender to a given spawn position using Manhattan distance
 function nearestDefender(spawn) {
   let def1 = [8, 2, "A"],
       def2 = [7, 7, "B"];
@@ -300,9 +323,11 @@ function nearestDefender(spawn) {
   return dist1 <= dist2 ? def1 : def2;
 }
 
+// Place attackers on the board and assign them random paths towards defenders
 function placeAttackers() {
   attackers = [];
   let usedCols = [];
+   // Randomly pick three unique columns for attacker spawn positions
   while (usedCols.length < 3) {
     let randCol = Math.floor(Math.random() * GRID_SIZE);
     if (!usedCols.includes(randCol)) usedCols.push(randCol);
@@ -311,12 +336,14 @@ function placeAttackers() {
 
   let pathColors = ["#0ff", "#f0f", "#ff0"];
   let defenders = [];
+    // Collect defender positions from the board
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       if (typeof board[r][c] === "string") defenders.push([r, c, board[r][c]]);
     }
   }
 
+   // Create attackers based on available defenders
   for (let i = 0; i < defenders.length; i++) {
     let col = usedCols[i];
     let spawn = [GRID_SIZE - 1, col];
@@ -337,12 +364,14 @@ function placeAttackers() {
             chosenTarget[0],
             chosenTarget[1]
           );
+    // Ensure the final destination is exactly the chosen target
     if (
       fullPath[fullPath.length - 1][0] !== chosenTarget[0] ||
       fullPath[fullPath.length - 1][1] !== chosenTarget[1]
     ) {
       fullPath.push(chosenTarget);
     }
+     // Reduce the full path based on the attacker's speed
     let steppedPath = [fullPath[0]];
     let currentIndex = 0;
     while (currentIndex < fullPath.length - 1) {
@@ -351,6 +380,7 @@ function placeAttackers() {
       currentIndex += nextStep;
       steppedPath.push(fullPath[currentIndex]);
     }
+    // Add the attacker with its properties to the attackers array
     attackers.push({
       id: String.fromCharCode(65 + i),
       fullPath: fullPath,
@@ -360,6 +390,7 @@ function placeAttackers() {
       currentIndex: 0,
       baseTarget: chosenTarget,
     });
+     // Initialize attacker history for movement logging
     attackerHistory[String.fromCharCode(65 + i)] = [
       [-1, -1],
       [-1, -1],
@@ -368,6 +399,7 @@ function placeAttackers() {
     ];
   }
 
+  // If there are less defenders than attackers, create additional attackers with random target selection
   for (let i = defenders.length; i < 3; i++) {
     let col = usedCols[i];
     let spawn = [GRID_SIZE - 1, col];
@@ -420,6 +452,7 @@ function placeAttackers() {
   }
 }
 
+// Count the number of defenders currently on the board
 function countDefenders() {
   let count = 0;
   for (let r = 0; r < GRID_SIZE; r++) {
@@ -430,6 +463,7 @@ function countDefenders() {
   return count;
 }
 
+// Draw the game board, grid, and defenders on the canvas
 function drawBoard(boardArr) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
@@ -438,11 +472,12 @@ function drawBoard(boardArr) {
   ctx.strokeStyle = "#444";
   ctx.textAlign = "center";
   
-  // Draw grid numbers
+   // Draw column numbers at the top of the grid
   for (let c = 0; c < GRID_SIZE; c++) {
     ctx.fillText(c.toString(), c * CELL_SIZE + 25 + CELL_SIZE / 2, 15);
   }
   
+  // Draw row numbers on the left side of the grid
   ctx.textAlign = "right";
   for (let r = 0; r < GRID_SIZE; r++) {
     ctx.fillText(
@@ -452,7 +487,7 @@ function drawBoard(boardArr) {
     );
   }
   
-  // Draw grid
+  // Draw individual cells and defender images
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       ctx.strokeStyle = "#444";
@@ -463,7 +498,7 @@ function drawBoard(boardArr) {
         CELL_SIZE
       );
       
-      // Draw defenders
+      // If there is a defender in the cell, draw its image and label
       if (typeof boardArr[GRID_SIZE - 1 - r][c] === "string") {
         try {
           ctx.drawImage(
@@ -561,6 +596,8 @@ function drawBoard(boardArr) {
   }
 }
 
+
+// Draw the paths for each attacker on the board
 function drawPaths() {
   for (let atk of attackers) {
     ctx.setLineDash([5, 5]);
@@ -585,6 +622,7 @@ function drawPaths() {
   ctx.font = "16px Arial";
   ctx.fillStyle = "#fff";
   ctx.textAlign = "center";
+   // Label each step along the attacker path
   for (let atk of attackers) {
     for (let i = 1; i < atk.steppedPath.length; i++) {
       let pr = atk.steppedPath[i][0];
@@ -650,12 +688,15 @@ function drawAttackers() {
 }
 
 
+// Draw both the game board and the paths/attackers
 function drawBoardAndPaths() {
   drawBoard(board);
   drawAttackers();
   if (showPaths) drawPaths();
 }
 
+
+// Initialize and start a new game
 function newGame() {
   // Clear predictions
   window.predictions = null;
@@ -678,11 +719,15 @@ function newGame() {
   defenderShots = { A: [], B: [] }; // Start with empty shots
   hoveredCell = null;
   
+
+  // Reset shot history for defenders
   defenderShotHistory = {
     A: [[-1,-1],[-1,-1],[-1,-1],[-1,-1]],
     B: [[-1,-1],[-1,-1],[-1,-1],[-1,-1]]
   };
 
+
+  // Initialize attacker history with starting positions
   attackerHistory = {};
   for (let atk of attackers) { 
     let startPos = atk.steppedPath[0];
@@ -696,10 +741,13 @@ function newGame() {
   
   updateDefenderShotHistory();
   
+  // Save the initial board state for training data purposes
   trainingData.push(JSON.parse(JSON.stringify(board)));
   drawBoardAndPaths();
 }
 
+
+// End the game and display the reason
 function endGame(reason) {
   gameOver = true;
   statusMessage.textContent = reason;
@@ -711,6 +759,8 @@ function endGame(reason) {
   }
 }
 
+
+// Redirect attackers to new targets if their original defender target is destroyed
 function redirectAttackers(destroyedDefender) {
   const remainingDefenders = [];
   for (let r = 0; r < GRID_SIZE; r++) {
@@ -728,6 +778,7 @@ function redirectAttackers(destroyedDefender) {
     endGame("All defenders destroyed - Attackers win!");
     return;
   }
+  // Update attackers that were targeting the destroyed defender
   for (let atk of attackers) {
     if (atk.baseTarget[2] === destroyedDefender[2]) {
       let newTarget = remainingDefenders[0];
@@ -771,6 +822,7 @@ function redirectAttackers(destroyedDefender) {
   }
 }
 
+// Validate if a shot position is allowed (empty, no attacker present, and not already shot)
 function isValidShotPosition(row, col) {
   return (
     row >= 0 && col >= 0 &&
@@ -785,10 +837,12 @@ function isValidShotPosition(row, col) {
   );
 }
 
+
+// Process and update prediction data from the server
 function updatePredictions(serverResponse) {
   window.predictions = [];
   
-  // Parse each attacker's predictions
+  // For each attacker, update prediction objects with primary and secondary predictions
   for (const prediction of serverResponse) {
     const attackerId = prediction.attackerID;
     const [pred1x, pred1y, pred1conf, pred2x, pred2y, pred2conf] = prediction.predictions;
@@ -895,7 +949,7 @@ function nextTurn() {
   // Clear predictions when moving to next turn
   window.predictions = null;
   
-  // 1. Save PRE-move state for history
+  // Save current state of attackers and defenders for history tracking
   const preMoveState = {
     attackers: {},
     defenders: JSON.parse(JSON.stringify(defenderShots)),
@@ -906,6 +960,7 @@ function nextTurn() {
   });
 
   const movedAttackers = [];
+  // Move each attacker one step along its path if possible
   attackers.forEach((atk) => {
     if (atk.currentIndex < atk.steppedPath.length - 1) {
       atk.currentIndex++;
@@ -923,7 +978,7 @@ function nextTurn() {
     const currentPos = atk.steppedPath[atk.currentIndex];
     let wasHit = false;
 
-    // Check for shot hits
+    // Check if the attacker has been hit by a shot
     Object.entries(defenderShots).forEach(([defender, shots]) => {
       if (
         shots.some(
@@ -1018,6 +1073,7 @@ function updateAttackerHistory() {
   });
 }
 
+// Update defender shot history arrays with the latest shot (or -1 if none)
 function updateDefenderShotHistory() {
   Object.keys(defenderShots).forEach((defender) => {
     if (!defenderShotHistory[defender]) {
@@ -1035,6 +1091,8 @@ function updateDefenderShotHistory() {
   });
 }
 
+
+// Create a separator element for the action log display
 function createSeparator(character) {
   const separator = document.createElement('hr');
   separator.style.border = 'none';
@@ -1048,6 +1106,8 @@ function createSeparator(character) {
   return separator;
 }
 
+
+// Update the on-screen action log with messages from each turn
 function updateActionLog() {
   actionLog.innerHTML = '';
   
@@ -1083,6 +1143,8 @@ function updateActionLog() {
 
 let shotToggle = 0;
 
+
+// Handle canvas click events for defender shot selection
 canvas.addEventListener("click", function(e) {
   if (gameOver || autoPlayActive) return;
   
@@ -1104,6 +1166,8 @@ canvas.addEventListener("click", function(e) {
   hoveredCell = [row, col];
   if (!isValidShotPosition(row, col)) return;
   
+
+   // Alternate shot selection between defender A and B
   let defender = (shotToggle % 2 === 0) ? "A" : "B";
   shotToggle++;
   
@@ -1117,7 +1181,7 @@ canvas.addEventListener("click", function(e) {
   drawBoardAndPaths();
 });
 
-
+// Toggle the legend visibility on the board when the related button is clicked
 const toggleLegendBtn = document.getElementById("toggleLegendBtn");
 const mapLegend = document.getElementById("mapLegend");
 
@@ -1131,6 +1195,7 @@ toggleLegendBtn.addEventListener("click", function() {
 });
 
 
+// Attach event listeners to UI buttons for various actions
 document.getElementById('makePredictionsBtn').addEventListener('click', logAttackerData);
 newGameBtn.addEventListener("click", newGame);
 nextTurnBtn.addEventListener("click", nextTurn);
@@ -1147,6 +1212,8 @@ togglePredictionOutputBtn.addEventListener("click", function() {
 });
 autoPlayBtn.addEventListener("click", toggleAutoPlay);
 
+
+// Get a list of current defender positions from the board
 function getCurrentDefenders() {
     let defenders = [];
     for (let r = 0; r < GRID_SIZE; r++) {
@@ -1159,13 +1226,18 @@ function getCurrentDefenders() {
     return defenders;
 }
 
+
+// Draw the prediction board (a smaller canvas representation) showing predicted positions and current positions
 function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots, turnOffset = 0) {
     const ctx = canvas.getContext('2d');
     const PRED_CELL_SIZE = 36;
     
+
+    // Fill the prediction canvas with a dark background
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Draw grid lines on the prediction canvas
     ctx.strokeStyle = '#444';
     ctx.lineWidth = 1;
     for (let i = 0; i <= GRID_SIZE; i++) {
@@ -1180,6 +1252,8 @@ function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots
         ctx.stroke();
     }
     
+
+    // Label grid rows and columns
     ctx.fillStyle = '#666';
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
@@ -1189,6 +1263,9 @@ function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots
         ctx.fillText((GRID_SIZE - 1 - i).toString(), 20, i * PRED_CELL_SIZE + 20 + PRED_CELL_SIZE/2);
     }
     
+
+
+    // Draw defenders on the prediction canvas
     for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
             if (typeof board[r][c] === "string") {
@@ -1216,6 +1293,8 @@ function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots
         }
     }
     
+
+    // Draw defender shots on the prediction canvas
     Object.entries(defenderShots).forEach(([defender, shots]) => {
         shots.forEach(shot => {
             const [r, c] = shot;
@@ -1238,6 +1317,8 @@ function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots
         });
     });
     
+
+    // Draw each attacker on the prediction canvas at their predicted positions
     attackers.forEach(attacker => {
         let predictedIndex = Math.min(attacker.currentIndex + turnOffset, attacker.steppedPath.length - 1);
         let [r, c] = attacker.steppedPath[predictedIndex];
@@ -1265,6 +1346,8 @@ function drawPredictionCanvas(canvas, board, attackers, defenders, defenderShots
     });
 }
 
+
+// Generate possible shot positions based on attacker positions, using two strategies
 function generatePossibleShots() {
     const possibleShots = [];
     
@@ -1302,6 +1385,8 @@ function generatePossibleShots() {
     return possibleShots;
 }
 
+
+// Evaluate the quality of a given shot prediction against attacker positions
 function evaluatePrediction(shots) {
     let score = 0;
     let maxPossibleScore = attackers.length * 100; // Perfect score if all shots are direct hits

@@ -3,12 +3,14 @@
 <head>
   <title>Defense Game</title>
   <style>
+    /* Reset body and html to remove default margins/padding */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
     }
 
+    /* Body styling for centering and background color */
     body {
       display: flex;
       flex-direction: column;
@@ -19,6 +21,7 @@
       font-family: Arial, sans-serif;
     }
 
+    /* Container for the main game area */
     .game-container {
       padding: 10px;
       display: flex;
@@ -28,15 +31,14 @@
       min-height: 90vh;
     }
 
-
-
+    /* The main canvas for the game */
     #gameCanvas {
       border: 1px solid #f5f2f2;
       background-color: #060505;
       margin: 20px 10px;
     }
 
-    /* Styling for the legend */
+    /* Map legend styling */
     #mapLegend {
       position: absolute;
       top: 50px;
@@ -48,6 +50,7 @@
       color: #fff;
     }
 
+    /* Buttons container */
     .controls {
       margin-top: 10px;
       display: flex;
@@ -56,6 +59,7 @@
       justify-content: center;
     }
 
+    /* General button styling */
     button {
       padding: 10px 20px;
       font-size: 14px;
@@ -66,16 +70,19 @@
       border-radius: 4px;
     }
 
+    /* Hover effect for buttons */
     button:hover {
       background-color: #444;
     }
 
+    /* Disabled buttons styling */
     button:disabled {
       background-color: #222;
       color: #666;
       cursor: not-allowed;
     }
 
+    /* Action log styling (initially hidden) */
     #actionLog {
       display: none;
       max-height: 200px;
@@ -90,17 +97,20 @@
       padding-left: 10px;
     }
 
+    /* Individual log entries */
     #actionLog li {
       margin: 3px 0;
       padding: 2px 0;
     }
 
+    /* Dashed line separator within the action log */
     #actionLog hr {
       border: none;
       border-top: 1px dashed #444;
       margin: 5px 0;
     }
 
+    /* AI prediction output container (initially hidden) */
     #prediction-output {
       display: none;
       width: 300px;
@@ -120,51 +130,51 @@
 <body>
   <div class="game-container">
     
-          <!-- Map legend element positioned at the top-left -->
-          <div id="mapLegend">
-            <strong>Map Legend</strong>
-            <ul style="padding-left: 15px; margin: 5px 0;">
-              <li>
-                <img src="Defender.png" width="20" height="20" alt="Defender Icon"> Defender (A,B)
-              </li>
-              <li>
-                <img src="Attacker.png" width="20" height="20" alt="Attacker Icon"> Attacker (A,B,C)
-              </li>
-              <li>Purple Square (A): Tile shot by A</li>
-              <li>Purple Square (B): Tile shot by B</li>
-              <li>
-                Prediction Movements:
-                <ul style="padding-left: 15px; margin: 5px 0;">
-                  <li>
-                    Attacker A:
-                    <ul style="padding-left: 15px;">
-                      <li>Dark red: Most likely</li>
-                      <li>Light red: Second likely</li>
-                    </ul>
-                  </li>
-                  <li>
-                    Attacker B:
-                    <ul style="padding-left: 15px;">
-                      <li>Dark green: Most likely</li>
-                      <li>Light green: Second likely</li>
-                    </ul>
-                  </li>
-                  <li>
-                    Attacker C:
-                    <ul style="padding-left: 15px;">
-                      <li>Dark blue: Most likely</li>
-                      <li>Light blue: Second likely</li>
-                    </ul>
-                  </li>
-                </ul>
-              </li>
-              
-              
-            </ul>
-          </div>
+    <!-- Map legend element -->
+    <div id="mapLegend">
+      <strong>Map Legend</strong>
+      <ul style="padding-left: 15px; margin: 5px 0;">
+        <li>
+          <img src="Defender.png" width="20" height="20" alt="Defender Icon"> Defender (A,B)
+        </li>
+        <li>
+          <img src="Attacker.png" width="20" height="20" alt="Attacker Icon"> Attacker (A,B,C)
+        </li>
+        <li>Purple Square (A): Tile shot by A</li>
+        <li>Purple Square (B): Tile shot by B</li>
+        <li>
+          Prediction Movements:
+          <ul style="padding-left: 15px; margin: 5px 0;">
+            <li>
+              Attacker A:
+              <ul style="padding-left: 15px;">
+                <li>Dark red: Most likely</li>
+                <li>Light red: Second likely</li>
+              </ul>
+            </li>
+            <li>
+              Attacker B:
+              <ul style="padding-left: 15px;">
+                <li>Dark green: Most likely</li>
+                <li>Light green: Second likely</li>
+              </ul>
+            </li>
+            <li>
+              Attacker C:
+              <ul style="padding-left: 15px;">
+                <li>Dark blue: Most likely</li>
+                <li>Light blue: Second likely</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
 
     <div class="board-container">
+      <!-- Game canvas -->
       <canvas id="gameCanvas" width="850" height="850"></canvas>
+      <!-- Game controls -->
       <div class="controls">
         <button id="newGameBtn">New Game</button>
         <button id="nextTurnBtn">Next Turn</button>
@@ -175,11 +185,15 @@
         <!-- <button id="autoPlayBtn">Auto Play</button> -->
         <button id="toggleLegendBtn">Toggle Legend</button>
       </div>
+      <!-- Dynamic status messages -->
       <div id="statusMessage"></div>
+      <!-- Action log list -->
       <ul id="actionLog"></ul>
     </div>
+    <!-- AI prediction text output container -->
     <div id="prediction-output" style="display: none;"></div>
   </div>
+  <!-- Load the main game logic -->
   <script src="game.js"></script>
 </body>
 </html>
